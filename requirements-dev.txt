@@ -1,0 +1,2 @@
+# Independent GIF decoding/compositing regression checks only.
+Pillow==12.3.0

@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en" data-platform="discord">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Prepare Twitch and 7TV emotes, Discord emoji, and Discord stickers locally."
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' data: blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; worker-src blob:; connect-src 'none'; object-src 'none'; base-uri 'none'"
+    />
+    <title>Emote Workshop</title>
+    <link rel="icon" type="image/png" href="assets/glorp-64.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="vendor/jszip.min.js" defer></script>
+    <script src="sample.js" defer></script>
+    <script src="engine.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <symbol id="i-upload" viewBox="0 0 24 24">
+          <path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5" />
+        </symbol>
+        <symbol id="i-image" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <circle cx="8" cy="8" r="1" />
+          <path d="m3 17 6-6 4 4 3-3 5 5" />
+        </symbol>
+        <symbol id="i-download" viewBox="0 0 24 24">
+          <path d="M12 3v13m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+        </symbol>
+        <symbol id="i-undo" viewBox="0 0 24 24">
+          <path d="m8 4-5 5 5 5M3 9h11a7 7 0 0 1 0 14" transform="translate(0 -2)" />
+        </symbol>
+        <symbol id="i-redo" viewBox="0 0 24 24">
+          <path d="m16 4 5 5-5 5M21 9H10a7 7 0 0 0 0 14" transform="translate(0 -2)" />
+        </symbol>
+        <symbol id="i-flip" viewBox="0 0 24 24">
+          <path d="M12 3v18M8 6l-5 6 5 6V6Zm8 0 5 6-5 6V6Z" />
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+          <rect x="5" y="10" width="14" height="11" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" />
+        </symbol>
+        <symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 3v15h15M3 6h15v15" /></symbol>
+        <symbol id="i-center" viewBox="0 0 24 24">
+          <path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" />
+          <circle cx="12" cy="12" r="3" />
+        </symbol>
+        <symbol id="i-rotate" viewBox="0 0 24 24">
+          <path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></symbol>
+      </defs>
+    </svg>
+
+    <header class="app-header">
+      <a class="brand" href="index.html" aria-label="Emote Workshop home"
+        ><img src="assets/glorp-64.png" alt="" /><span>Emote Workshop</span></a
+      >
+      <div class="header-actions">
+        <span class="offline"
+          ><svg><use href="#i-lock" /></svg>Processed on this device</span
+        >
+        <button id="sample" class="button quiet" disabled>Try sample</button>
+        <button class="button primary" id="import-top">
+          <svg><use href="#i-upload" /></svg>Import media
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="workspace-heading">
+        <div>
+          <p class="eyebrow">LOCAL EMOTE EDITOR</p>
+          <h1>Prepare emotes for Twitch, Discord and 7TV</h1>
+        </div>
+      </div>
+      <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+      <div class="workspace">
+        <aside class="settings panel" aria-label="Image settings">
+          <section class="setting-section destination-section">
+            <div class="section-title">
+              <h2>Destination</h2>
+              <span class="step">01</span>
+            </div>
+            <div class="segmented" aria-label="Platform">
+              <button id="platform-discord" aria-pressed="true">Discord</button
+              ><button id="platform-seventv" aria-pressed="false">7TV</button
+              ><button id="platform-twitch" aria-pressed="false">Twitch</button>
+            </div>
+            <div id="discord-types" class="type-switch" aria-label="Discord format">
+              <button id="type-emoji" aria-pressed="true">Emoji</button
+              ><button id="type-sticker" aria-pressed="false">Sticker</button>
+            </div>
+            <p id="destination-hint" class="muted destination-hint">
+              One file for messages and reactions.
+            </p>
+          </section>
+
+          <section class="setting-section">
+            <div class="section-title">
+              <h2>Framing</h2>
+              <span class="step">02</span>
+            </div>
+            <fieldset id="framing" disabled>
+              <button id="center" class="button center-button">
+                <svg><use href="#i-center" /></svg>Center image
+              </button>
+              <div class="control-label">
+                <label for="zoom">Scale</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="zoom-value"
+                      type="number"
+                      min="10"
+                      max="300"
+                      step="1"
+                      value="90"
+                      data-slider-value="zoom"
+                      aria-label="Scale percent"
+                      title="Enter an exact scale"
+                    /><span aria-hidden="true">%</span></span
+                  >
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="zoom"
+                    aria-label="Reset scale to 90 percent"
+                    title="Reset scale to 90%"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input type="range" id="zoom" min="10" max="300" step="1" value="90" />
+              <div class="tool-row two">
+                <button id="fit" class="button small">Fit</button
+                ><button id="fill" class="button small">Fill</button>
+              </div>
+              <div class="control-label">
+                <label for="stretch">Height</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="stretch-value"
+                      type="number"
+                      min="100"
+                      max="300"
+                      step="1"
+                      value="100"
+                      data-slider-value="stretch"
+                      aria-label="Height percent"
+                      title="100% keeps natural proportions"
+                    /><span aria-hidden="true">%</span></span
+                  >
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="stretch"
+                    aria-label="Reset height to natural proportions"
+                    title="Reset height to 100%"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input
+                type="range"
+                id="stretch"
+                min="100"
+                max="300"
+                step="1"
+                value="100"
+                aria-describedby="stretch-hint"
+              />
+              <p id="stretch-hint" class="muted stretch-hint">Stretch taller · 100% is natural.</p>
+              <button
+                id="trim"
+                class="toggle-control"
+                type="button"
+                role="switch"
+                aria-pressed="false"
+              >
+                <span
+                  ><strong id="trim-label">Ignore transparent margins</strong
+                  ><small id="trim-hint">Center and size using visible artwork.</small></span
+                ><span class="toggle-track" aria-hidden="true"><span></span></span>
+              </button>
+              <div class="control-label rotation-label">
+                <label for="rotation">Rotation</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="rotation-value"
+                      type="number"
+                      min="-180"
+                      max="180"
+                      step="1"
+                      value="0"
+                      data-slider-value="rotation"
+                      aria-label="Rotation degrees"
+                      title="Enter an exact rotation"
+                    /><span aria-hidden="true">°</span></span
+                  >
+                  <button
+                    id="reset-rotation"
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="rotation"
+                    aria-label="Reset rotation to zero"
+                    title="Reset rotation"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input type="range" id="rotation" min="-180" max="180" step="1" value="0" />
+              <div class="tool-row">
+                <button id="flip" class="button small full-width" aria-pressed="false">
+                  <svg><use href="#i-flip" /></svg>Flip
+                </button>
+              </div>
+            </fieldset>
+          </section>
+
+          <section class="setting-section">
+            <div class="section-title">
+              <h2>Finish</h2>
+              <span id="finish-step" class="step">03</span>
+            </div>
+            <fieldset id="finish" disabled>
+              <div class="control-label">
+                <label for="outline">Outline</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="outline-value"
+                      type="number"
+                      min="0"
+                      max="6"
+                      step="0.5"
+                      value="0"
+                      data-slider-value="outline"
+                      aria-label="Outline pixels"
+                      title="Enter an exact outline width"
+                    /><span aria-hidden="true">px</span></span
+                  >
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="outline"
+                    aria-label="Reset outline to off"
+                    title="Reset outline to off"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input type="range" id="outline" min="0" max="6" step="0.5" value="0" />
+              <div class="color-row">
+                <label for="outline-color">Outline color</label
+                ><input type="color" id="outline-color" value="#ffffff" />
+              </div>
+              <div class="control-label">
+                <label for="brightness">Brightness</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="brightness-value"
+                      type="number"
+                      min="50"
+                      max="150"
+                      step="1"
+                      value="100"
+                      data-slider-value="brightness"
+                      aria-label="Brightness percent"
+                      title="Enter an exact brightness"
+                    /><span aria-hidden="true">%</span></span
+                  >
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="brightness"
+                    aria-label="Reset brightness to 100 percent"
+                    title="Reset brightness to 100%"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input type="range" id="brightness" min="50" max="150" step="1" value="100" />
+            </fieldset>
+          </section>
+          <div class="settings-note">
+            <svg><use href="#i-lock" /></svg>
+            <p>Files remain local.<span>No uploads or network requests.</span></p>
+          </div>
+        </aside>
+
+        <section class="editor panel" aria-labelledby="canvas-title">
+          <div class="panel-heading">
+            <div class="title-with-icon">
+              <svg><use href="#i-crop" /></svg>
+              <h2 id="canvas-title">Canvas</h2>
+            </div>
+            <div class="history">
+              <button
+                id="editor-animation-toggle"
+                class="playback-button editor-playback"
+                aria-label="Pause animated canvas preview"
+                aria-pressed="true"
+                hidden
+              >
+                <svg><use href="#i-pause" /></svg><span>Pause</span></button
+              ><button
+                class="icon-button"
+                id="undo"
+                aria-label="Undo"
+                title="Undo (Ctrl+Z)"
+                disabled
+              >
+                <svg><use href="#i-undo" /></svg></button
+              ><button
+                class="icon-button"
+                id="redo"
+                aria-label="Redo"
+                title="Redo (Ctrl+Shift+Z)"
+                disabled
+              >
+                <svg><use href="#i-redo" /></svg>
+              </button>
+            </div>
+          </div>
+          <div id="drop-zone" class="stage" aria-busy="false">
+            <div class="canvas-wrap">
+              <canvas
+                id="editor-canvas"
+                width="800"
+                height="800"
+                tabindex="0"
+                aria-label="Image framing canvas. Drag to reposition, or use arrow keys. Hold Shift for larger steps."
+                hidden
+              ></canvas>
+              <img
+                id="animated-canvas-preview"
+                class="animated-canvas-preview"
+                alt="Animated canvas preview"
+                hidden
+              />
+              <div id="alignment-guides" class="alignment-guides" aria-hidden="true">
+                <span class="guide vertical"></span><span class="guide horizontal"></span>
+              </div>
+              <button id="empty-import" class="empty-import">
+                <span class="import-glyph"
+                  ><svg><use href="#i-image" /></svg><span>+</span></span
+                ><strong>Import media</strong><span>Drop, paste, or click to browse</span
+                ><small>PNG, JPG, GIF, WebP, AVIF, or MP4 · Up to 100 MB</small>
+              </button>
+            </div>
+            <div id="loading" class="loading" hidden>
+              <span class="spinner"></span><span id="loading-label">Opening media…</span>
+            </div>
+          </div>
+          <div class="canvas-caption">
+            <span id="canvas-instruction">Drag, drop, paste, or import a file.</span
+            ><span id="canvas-format">PNG / GIF / WEBP / AVIF / MP4</span>
+          </div>
+          <section id="animation-section" class="setting-section" hidden>
+            <div class="section-title"><h2>Animation</h2></div>
+            <fieldset id="animation-trim">
+              <div class="control-label">
+                <label for="speed">Speed</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="speed-value"
+                      type="number"
+                      min="50"
+                      max="150"
+                      step="1"
+                      value="100"
+                      data-slider-value="speed"
+                      aria-label="Animation speed percent"
+                      title="100% is original speed"
+                    /><span aria-hidden="true">%</span></span
+                  >
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="speed"
+                    aria-label="Reset animation to original speed"
+                    title="Reset speed to 100%"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input
+                type="range"
+                id="speed"
+                min="50"
+                max="150"
+                step="1"
+                value="100"
+                aria-describedby="speed-hint"
+              />
+              <p id="speed-hint" class="muted stretch-hint">Slower ← 100% original → Faster</p>
+              <div
+                id="frame-timeline"
+                class="frame-timeline"
+                role="group"
+                aria-label="Animation frame trim"
+              >
+                <div id="timeline-frames" class="timeline-frames" aria-hidden="true"></div>
+                <div class="timeline-shade before"></div>
+                <div class="timeline-shade after"></div>
+                <div class="timeline-selection" aria-hidden="true"></div>
+                <button
+                  id="trim-start-handle"
+                  type="button"
+                  class="trim-handle start"
+                  role="slider"
+                  aria-label="Trim start frame"
+                  aria-valuemin="1"
+                  aria-valuemax="1"
+                  aria-valuenow="1"
+                  aria-controls="start-frame-value"
+                >
+                  <span aria-hidden="true">❮</span>
+                </button>
+                <button
+                  id="trim-end-handle"
+                  type="button"
+                  class="trim-handle end"
+                  role="slider"
+                  aria-label="Trim end frame"
+                  aria-valuemin="2"
+                  aria-valuemax="2"
+                  aria-valuenow="2"
+                  aria-controls="end-frame-value"
+                >
+                  <span aria-hidden="true">❯</span>
+                </button>
+              </div>
+              <p id="timeline-status" class="muted stretch-hint">
+                Drag the handles to trim. Arrow keys adjust one frame.
+              </p>
+              <div class="control-label">
+                <label for="start-frame">Start frame</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="start-frame-value"
+                      type="number"
+                      min="1"
+                      max="2"
+                      step="1"
+                      value="1"
+                      data-slider-value="start-frame"
+                      aria-label="Start frame number"
+                      title="Enter an exact start frame"
+                  /></span>
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="start-frame"
+                    aria-label="Reset start to first frame"
+                    title="Reset start to first frame"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input type="range" id="start-frame" min="1" max="2" step="1" value="1" hidden />
+              <div class="control-label">
+                <label for="end-frame">End frame</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="end-frame-value"
+                      type="number"
+                      min="2"
+                      max="2"
+                      step="1"
+                      value="2"
+                      data-slider-value="end-frame"
+                      aria-label="End frame number"
+                      title="Enter an exact end frame"
+                  /></span>
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="end-frame"
+                    aria-label="Reset end frame to destination limit"
+                    title="Reset end frame to destination limit"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input type="range" id="end-frame" min="2" max="2" step="1" value="2" hidden />
+              <p id="animation-range-summary" class="animation-range-summary">Frames 1–2 · 0.2 s</p>
+              <button id="reset-animation-trim" class="button small full-width">Reset trim</button>
+            </fieldset>
+          </section>
+          <div id="source-info" class="source-info">
+            <span class="file-symbol"
+              ><svg><use href="#i-image" /></svg
+            ></span>
+            <div>
+              <strong id="source-name">No image selected</strong
+              ><span id="source-details">Large files are resized automatically.</span>
+            </div>
+            <button class="button quiet small" id="replace" hidden>Replace</button>
+          </div>
+          <div class="editor-footer">
+            <span>SHORTCUTS</span>
+            <p>Paste from the clipboard · Drag files anywhere · Arrow keys nudge the image</p>
+          </div>
+        </section>
+
+        <aside class="result-column" aria-label="Preview and export">
+          <section class="preview panel">
+            <div class="panel-heading">
+              <h2>Preview</h2>
+              <div class="preview-controls">
+                <button id="animation-toggle" class="playback-button" aria-pressed="true" hidden>
+                  <svg><use href="#i-pause" /></svg><span>Pause</span>
+                </button>
+                <div class="theme-switch">
+                  <button id="theme-dark" aria-label="Dark chat preview" aria-pressed="true">
+                    Dark</button
+                  ><button id="theme-light" aria-label="Light chat preview" aria-pressed="false">
+                    Light
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="chat" class="chat discord dark">
+              <div class="chat-top">
+                <span id="chat-channel"># general</span><span aria-hidden="true">•••</span>
+              </div>
+              <div class="chat-messages">
+                <p>
+                  <b class="user-one">mochi</b><span id="chat-line-one">this is the one</span>
+                  <img class="emote-preview inline-emote" alt="Your emote in a message" hidden />
+                </p>
+                <p><b class="user-two">pixelpal</b> <span>okay, I love it</span></p>
+                <div class="feature-message">
+                  <div class="avatar" aria-hidden="true">Y</div>
+                  <div class="feature-content">
+                    <b class="user-you">you<span>Today at 12:34</span></b>
+                    <div class="emote-run">
+                      <img class="emote-preview main-emote" alt="Your emote in chat" hidden /><img
+                        class="emote-preview repeat-emote"
+                        alt=""
+                        hidden
+                      /><img class="emote-preview repeat-emote" alt="" hidden /><span
+                        id="preview-placeholder"
+                        >Export preview</span
+                      >
+                    </div>
+                    <span id="reaction" class="reaction" hidden
+                      ><img class="emote-preview" alt="Your emoji as a reaction" /> 3</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input" id="chat-input">Send a message <span>☺</span></div>
+            </div>
+            <div class="preview-note">
+              <span class="check-mark">✓</span
+              ><span id="preview-caption">Actual-size preview · dark background</span>
+            </div>
+          </section>
+          <section class="export panel">
+            <div class="section-title">
+              <h2>Export</h2>
+              <span id="export-step" class="step">04</span>
+            </div>
+            <label for="emote-name">File name</label
+            ><input
+              type="text"
+              id="emote-name"
+              value="my_emote"
+              maxlength="32"
+              spellcheck="false"
+              autocomplete="off"
+            />
+            <div class="output-heading">
+              <span>FILES</span><span id="export-status" role="status">Waiting for an image</span>
+            </div>
+            <div id="output-list" class="output-list"></div>
+            <p id="export-note" class="export-note">
+              Dimensions and file size are checked before download.
+            </p>
+            <button id="export-current" class="button primary export-button" disabled>
+              <svg><use href="#i-download" /></svg><span id="export-label">Export emoji</span>
+            </button>
+            <button id="export-all" class="button export-all" disabled>
+              All destinations <span>.zip</span>
+            </button>
+          </section>
+        </aside>
+      </div>
+      <footer class="app-footer">
+        <span>Offline image processing</span
+        ><span>Twitch emotes · Discord emoji · Discord stickers · 7TV emotes</span>
+      </footer>
+    </main>
+    <input
+      id="file-input"
+      type="file"
+      accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/avif-sequence,video/mp4,.avif,.avifs,.mp4"
+      hidden
+    />
+    <div class="toast" id="toast" role="status" hidden></div>
+    <noscript>This editor needs JavaScript enabled. All image processing happens locally.</noscript>
+  </body>
+</html>

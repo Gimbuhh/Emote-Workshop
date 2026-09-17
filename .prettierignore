@@ -1,0 +1,9 @@
+Emote Workshop.html
+dist/vendor/
+dist/sample.js
+package-lock.json
+tests/output/
+playwright-report/
+test-results/
+node_modules/
+.venv/
