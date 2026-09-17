@@ -11,6 +11,23 @@ const assert = require('node:assert/strict');
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(pathToFileURL(path.resolve(file)).href);
+      const versionLink = page.locator('.version-link');
+      assert.equal(await versionLink.textContent(), `v${require('../package.json').version}`);
+      assert.equal(
+        await versionLink.getAttribute('href'),
+        'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md',
+      );
+      assert.equal(await versionLink.getAttribute('target'), '_blank');
+      assert.equal(await versionLink.getAttribute('rel'), 'noopener noreferrer');
+      for (const width of [1280, 375, 320]) {
+        await page.setViewportSize({ width, height: 800 });
+        assert.equal(await versionLink.isVisible(), true);
+        const linkBox = await versionLink.boundingBox();
+        const actionBox = await page.locator('.header-actions').boundingBox();
+        assert(linkBox.x >= 0 && linkBox.x + linkBox.width <= actionBox.x);
+        assert(actionBox.x + actionBox.width <= width);
+      }
+      await page.setViewportSize({ width: 1280, height: 720 });
       await page.click('#platform-seventv');
       const bytes = await page.evaluate(async () => {
         const c = document.createElement('canvas');

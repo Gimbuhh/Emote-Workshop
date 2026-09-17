@@ -115,6 +115,29 @@ button svg {
   top: 0;
   z-index: 10;
 }
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.version-link {
+  align-self: flex-start;
+  margin-top: 3px;
+  padding: 2px 4px;
+  color: #bdc1ca;
+  font-size: 11px;
+  line-height: 1.4;
+  border-radius: 4px;
+}
+.version-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.version-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
 .brand {
   display: flex;
   align-items: center;
