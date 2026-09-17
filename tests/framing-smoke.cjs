@@ -12,7 +12,10 @@ const assert = require('node:assert/strict');
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(pathToFileURL(path.resolve(file)).href);
       const versionLink = page.locator('.version-link');
-      assert.equal(await versionLink.textContent(), `v${require('../package.json').version}`);
+      assert.equal(
+        await versionLink.textContent(),
+        `v${require('../package.json').version.split('.').slice(0, 2).join('.')}`,
+      );
       assert.equal(
         await versionLink.getAttribute('href'),
         'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md',
