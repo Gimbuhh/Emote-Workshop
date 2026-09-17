@@ -4,10 +4,14 @@ All notable changes to Emote Workshop are documented here. Per-version notes are
 
 ## Unreleased
 
+## 1.1.1 - 2026-09-17
+
 ### Added
 
 - A visible version link beside the Emote Workshop title, opening this changelog on GitHub in a new tab.
 - A root changelog and per-version release notes for the existing 1.0 and 1.1 versions.
+
+Package version: `1.1.1`. [Release notes](release-notes/1.1.1.md).
 
 ## 1.1 - 2026-09-17
 
