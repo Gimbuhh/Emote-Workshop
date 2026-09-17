@@ -72,6 +72,7 @@ const context = vm.createContext({
 vm.runInContext(app.slice(firstHint, lastHint), context);
 context.syncFramingHints();
 assert.equal(elements.trim.disabled, true);
+assert.equal(elements.trim.hidden, true);
 assert.equal(
   elements['trim-hint'].textContent,
   'No transparent margins found. This source is opaque.',
@@ -93,6 +94,7 @@ assert.equal(context.fillZoom({ trim: false }), 100);
 context.source.bounds = { x: 10, y: 5, w: 300, h: 100 };
 context.syncFramingHints();
 assert.equal(elements.trim.disabled, false);
+assert.equal(elements.trim.hidden, false);
 assert.equal(elements['trim-hint'].textContent, 'Crop the canvas to visible artwork.');
 context.importing = true;
 context.syncFramingHints();

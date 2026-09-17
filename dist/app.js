@@ -38,6 +38,7 @@
   const modeMap = (fn) => Object.fromEntries(Object.keys(modes).map((key) => [key, fn(key)]));
   const fresh = () => ({
     zoom: 90,
+    width: 100,
     stretch: 100,
     speed: 100,
     x: 0,
@@ -153,6 +154,7 @@
   function syncFramingHints() {
     const square = mode !== 'seventv',
       canTrim = hasTransparentMargins();
+    $('trim').hidden = !canTrim;
     $('trim').disabled = !source || importing || exporting || !canTrim;
     $('trim-hint').textContent =
       source && !canTrim
@@ -169,7 +171,10 @@
   }
   function fillZoom(s) {
     const original = effectiveBounds(s),
-      b = { w: original.w, h: original.h * ((s.stretch ?? 100) / 100) };
+      b = {
+        w: original.w * ((s.width ?? 100) / 100),
+        h: original.h * ((s.stretch ?? 100) / 100),
+      };
     if (mode === 'seventv') return 100;
     return Math.min(300, (Math.max(b.w, b.h) / Math.max(1, Math.min(b.w, b.h))) * 100);
   }
@@ -183,7 +188,7 @@
   }
   function syncControls() {
     const s = state();
-    for (const key of ['zoom', 'stretch', 'speed', 'rotation', 'outline', 'brightness']) {
+    for (const key of ['zoom', 'width', 'stretch', 'speed', 'rotation', 'outline', 'brightness']) {
       $(key).value = s[key];
       syncSliderValue(key, key === 'zoom' ? Math.round(s[key]) : s[key]);
     }
@@ -206,10 +211,11 @@
               h: (source.bounds.h * h) / editorImage.height,
             }
           : { w, h },
+      stretchedWidth = b.w * ((state().width ?? 100) / 100),
       stretchedHeight = b.h * ((state().stretch ?? 100) / 100),
-      ratio = Math.min(1, 1000 / Math.max(b.w, stretchedHeight));
+      ratio = Math.min(1, 1000 / Math.max(stretchedWidth, stretchedHeight));
     return {
-      width: Math.max(1, Math.round(b.w * ratio)),
+      width: Math.max(1, Math.round(stretchedWidth * ratio)),
       height: Math.max(1, Math.round(stretchedHeight * ratio)),
     };
   }
@@ -886,7 +892,7 @@
     syncAnimationControls();
     schedulePreview();
   };
-  for (const key of ['zoom', 'stretch', 'speed', 'rotation', 'outline', 'brightness']) {
+  for (const key of ['zoom', 'width', 'stretch', 'speed', 'rotation', 'outline', 'brightness']) {
     let started = false;
     $(key).addEventListener('dragstart', (e) => e.preventDefault());
     $(key).addEventListener('input', () => {
@@ -938,12 +944,14 @@
       const before = effectiveBounds(s);
       s.trim = !s.trim;
       const after = effectiveBounds(s);
-      const stretch = s.stretch / 100;
+      const width = (s.width ?? 100) / 100,
+        stretch = s.stretch / 100;
       s.zoom = Math.max(
         10,
         Math.min(
           300,
-          (s.zoom * Math.max(after.w, after.h * stretch)) / Math.max(before.w, before.h * stretch),
+          (s.zoom * Math.max(after.w * width, after.h * stretch)) /
+            Math.max(before.w * width, before.h * stretch),
         ),
       );
       s.x = 0;

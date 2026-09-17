@@ -146,6 +146,43 @@
                 ><button id="fill" class="button small">Fill</button>
               </div>
               <div class="control-label">
+                <label for="width">Width</label>
+                <span class="value-controls">
+                  <span class="numeric-value"
+                    ><input
+                      id="width-value"
+                      type="number"
+                      min="100"
+                      max="300"
+                      step="1"
+                      value="100"
+                      data-slider-value="width"
+                      aria-label="Width percent"
+                      title="100% keeps natural proportions"
+                    /><span aria-hidden="true">%</span></span
+                  >
+                  <button
+                    type="button"
+                    class="value-reset"
+                    data-reset-slider="width"
+                    aria-label="Reset width to natural proportions"
+                    title="Reset width to 100%"
+                  >
+                    <svg aria-hidden="true"><use href="#i-rotate" /></svg>
+                  </button>
+                </span>
+              </div>
+              <input
+                type="range"
+                id="width"
+                min="100"
+                max="300"
+                step="1"
+                value="100"
+                aria-describedby="width-hint"
+              />
+              <p id="width-hint" class="muted stretch-hint">Stretch wider · 100% is natural.</p>
+              <div class="control-label">
                 <label for="stretch">Height</label>
                 <span class="value-controls">
                   <span class="numeric-value"
@@ -185,6 +222,7 @@
               <button
                 id="trim"
                 class="toggle-control"
+                hidden
                 type="button"
                 role="switch"
                 aria-pressed="false"

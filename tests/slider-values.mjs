@@ -56,7 +56,15 @@ class Element {
     if (this.value !== this.focusValue) this.dispatchEvent(new Event('change'));
   }
 }
-const defaults = { zoom: 90, stretch: 100, speed: 100, rotation: 0, outline: 0, brightness: 100 },
+const defaults = {
+    zoom: 90,
+    width: 100,
+    stretch: 100,
+    speed: 100,
+    rotation: 0,
+    outline: 0,
+    brightness: 100,
+  },
   settings = { ...defaults, x: 0.2, y: -0.3, flip: true, color: '#123456' },
   ranges = { twitch: { start: 0, end: 49 }, seventv: { start: 0, end: 99 } },
   elements = {},
@@ -65,6 +73,7 @@ const defaults = { zoom: 90, stretch: 100, speed: 100, rotation: 0, outline: 0, 
   history = [];
 for (const [key, min, max, step, value] of [
   ['zoom', 10, 300, 1, 90],
+  ['width', 100, 300, 1, 100],
   ['stretch', 100, 300, 1, 100],
   ['speed', 50, 150, 1, 100],
   ['rotation', -180, 180, 1, 0],
@@ -159,6 +168,14 @@ settings.zoom = 95.7;
 elements.zoom.value = '96';
 type('zoom', 96);
 assert.equal(settings.zoom, 96, 'Exact entry replaces a fractional fit scale');
+type('width', 200);
+assert.equal(settings.width, 200);
+type('width', 400);
+assert.equal(settings.width, 300);
+type('width', 50);
+assert.equal(settings.width, 100);
+type('width', 180);
+
 type('stretch', 145);
 assert.equal(settings.stretch, 145);
 type('stretch', 400);
@@ -172,7 +189,7 @@ type('speed', 10);
 assert.equal(settings.speed, 50);
 type('speed', 300);
 assert.equal(settings.speed, 150);
-for (const button of buttons.slice(0, 6)) button.dispatchEvent(new Event('click'));
+for (const button of buttons.slice(0, 7)) button.dispatchEvent(new Event('click'));
 for (const [key, value] of Object.entries(defaults)) assert.equal(settings[key], value);
 assert.equal(settings.flip, true);
 assert.equal(settings.color, '#123456');

@@ -637,12 +637,17 @@ input[type='range']:disabled {
   border-top: 1px solid #303239;
   border-bottom: 1px solid #303239;
   background: transparent;
-  padding: 13px 0;
-  display: flex;
+  padding: 13px 4px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   text-align: left;
+}
+.toggle-control > span:first-child {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .stretch-hint {
   font-size: 11px;
@@ -653,6 +658,7 @@ input[type='range']:disabled {
   display: block;
   font-size: 12px;
   font-weight: 620;
+  line-height: 1.35;
 }
 .toggle-control:hover:enabled {
   background: color-mix(in srgb, var(--surface) 45%, transparent);

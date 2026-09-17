@@ -2,13 +2,14 @@
 function drawArtwork(ctx, image, state, side, bounds, makeCanvas, height = side) {
   ctx.clearRect(0, 0, side, height);
   const source = state.trim ? bounds : { x: 0, y: 0, w: image.width, h: image.height };
-  const stretch = (state.stretch ?? 100) / 100,
-    scale = (Math.min(side / source.w, height / (source.h * stretch)) * state.zoom) / 100;
+  const width = (state.width ?? 100) / 100,
+    stretch = (state.stretch ?? 100) / 100,
+    scale = (Math.min(side / (source.w * width), height / (source.h * stretch)) * state.zoom) / 100;
   function place(target) {
     target.save();
     target.translate(side * (0.5 + state.x), height * (0.5 + state.y));
     target.rotate((state.rotation * Math.PI) / 180);
-    target.scale(state.flip ? -scale : scale, scale * stretch);
+    target.scale((state.flip ? -scale : scale) * width, scale * stretch);
     target.drawImage(
       image,
       source.x,
@@ -424,6 +425,9 @@ function imageWorker() {
       !Number.isFinite(s.zoom) ||
       s.zoom < 10 ||
       s.zoom > 300 ||
+      !Number.isFinite(s.width ?? 100) ||
+      (s.width ?? 100) < 100 ||
+      (s.width ?? 100) > 300 ||
       !Number.isFinite(s.stretch ?? 100) ||
       (s.stretch ?? 100) < 100 ||
       (s.stretch ?? 100) > 300 ||
@@ -876,7 +880,10 @@ function imageWorker() {
     if (!preset) throw new Error('Unknown destination.');
     checkState(state);
     const original = state.trim ? bounds : { w: frames[0].width, h: frames[0].height },
-      source = { w: original.w, h: original.h * ((state.stretch ?? 100) / 100) },
+      source = {
+        w: original.w * ((state.width ?? 100) / 100),
+        h: original.h * ((state.stretch ?? 100) / 100),
+      },
       ratio = Math.min(1, 1000 / Math.max(source.w, source.h)),
       dimensions =
         mode === 'seventv'

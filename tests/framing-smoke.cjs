@@ -66,6 +66,21 @@ const assert = require('node:assert/strict');
       await drag(0, 5);
       const insideSnap = await centroid();
       assert(Math.abs(insideSnap.y - before.y) < 1, '5px must snap to center');
+      await page.locator('#width-value').fill('200');
+      await page.locator('#width-value').press('Enter');
+      await page.waitForFunction(() => {
+        const c = document.querySelector('#editor-canvas');
+        return c.width === 800 && c.height === 197;
+      });
+      await page.waitForFunction(() =>
+        document.querySelector('#output-list').textContent.includes('520 \u00d7 128'),
+      );
+      await page.click('#undo');
+      assert.equal(await page.locator('#width-value').inputValue(), '100');
+      await page.click('#redo');
+      assert.equal(await page.locator('#width-value').inputValue(), '200');
+      await page.click('[data-reset-slider="width"]');
+      assert.equal(await page.locator('#width-value').inputValue(), '100');
       assert.deepEqual(errors, []);
       console.log(`${file}: rectangular dragging and snapping OK`);
       await page.close();
