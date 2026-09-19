@@ -51,6 +51,10 @@ for (const path of ['dist/index.html', 'Emote Workshop.html']) {
     new RegExp(`>v${escapedVersion}</a\\s*>`).test(content),
     `${path} does not display v${displayVersion}.`,
   );
+  assert(
+    content.includes(`https://github.com/Gimbuhh/Emote-Workshop/releases/tag/${tag}`),
+    `${path} does not link to the immutable ${tag} release.`,
+  );
 }
 
 const buildCheck = spawnSync(process.execPath, ['build-offline.mjs', '--check'], {

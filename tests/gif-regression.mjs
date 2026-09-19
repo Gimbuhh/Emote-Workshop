@@ -11,7 +11,7 @@ function engine(path) {
   assert(anchor.test(text), 'Worker test anchor missing');
   const source = text.replace(
     anchor,
-    'self.test={encodeGif,makePalette,selectedAnimation,setDelays(values){delays=values;frames=Array(values.length);}};let queue=Promise.resolve();',
+    'self.test={encodeGif,makePalette,selectedAnimation,checkRenderBudget,renderPlan,setDelays(values){delays=values;frames=Array(values.length);},setAnimation(count,delay=40){delays=Array(count).fill(delay);frames=Array(count);}};let queue=Promise.resolve();',
   );
   const context = { self: {}, window: {}, TextEncoder, Uint8Array, Uint32Array, Float64Array };
   vm.runInNewContext(source + '\nimageWorker();', context);
@@ -43,6 +43,53 @@ assert.equal(
   current.selectedAnimation(5000, 1, null, 50).selected.length,
   25,
   'Duration limits apply after speed',
+);
+assert.doesNotThrow(() => current.checkRenderBudget(512, 512, 120));
+assert.doesNotThrow(() => current.checkRenderBudget(1000, 100, 240));
+assert.throws(() => current.checkRenderBudget(512, 512, 240), /too large to process safely/);
+assert.throws(() => current.checkRenderBudget(1000, 1000, 240), /too large to process safely/);
+current.setAnimation(240);
+const squarePlan = current.renderPlan(
+    1000,
+    1000,
+    { duration: Infinity, maxFrames: 1000 },
+    null,
+    100,
+  ),
+  mediumPlan = current.renderPlan(512, 512, { duration: Infinity, maxFrames: 1000 }, null, 100),
+  widePlan = current.renderPlan(1000, 100, { duration: Infinity, maxFrames: 1000 }, null, 100);
+assert.equal(squarePlan.selected.length, 30);
+assert.equal(mediumPlan.selected.length, 120);
+assert.equal(widePlan.selected.length, 240);
+assert.equal(squarePlan.duration, 9600);
+assert.equal(mediumPlan.duration, 9600);
+assert.equal(widePlan.duration, 9600);
+current.setAnimation(1001);
+assert.throws(
+  () => current.renderPlan(1, 1, { duration: Infinity, maxFrames: 1000 }, null, 100),
+  /at most 1000 frames/,
+  'Destination frame limits apply before sampling',
+);
+const longFrame = new Uint8Array([120, 80, 40, 255]),
+  longDelay = current.encodeGif([longFrame], 1, 1, [700000], 64),
+  serializedDelays = [];
+for (let i = 0; i + 7 < longDelay.bytes.length; i++) {
+  if (
+    longDelay.bytes[i] === 0x21 &&
+    longDelay.bytes[i + 1] === 0xf9 &&
+    longDelay.bytes[i + 2] === 0x04
+  ) {
+    serializedDelays.push(longDelay.bytes[i + 4] | (longDelay.bytes[i + 5] << 8));
+  }
+}
+assert.equal(longDelay.frames, 2);
+assert(serializedDelays.every((delay) => delay <= 65535));
+assert.equal(serializedDelays.reduce((sum, delay) => sum + delay, 0) * 10, 700000);
+assert.equal(longDelay.duration, 700000);
+assert.throws(() => current.encodeGif([longFrame], 1, 1, [Infinity], 64), /invalid frame timing/);
+assert.throws(
+  () => current.encodeGif([longFrame], 1, 1, [1966060], 64, 3),
+  /at most 3 timing frames/,
 );
 const width = 128,
   height = 128,

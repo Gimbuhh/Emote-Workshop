@@ -2,6 +2,27 @@
 
 All notable changes to Emote Workshop are documented here. Per-version notes are preserved under `release-notes/`. Dates below follow the repository's version commits.
 
+## 1.1.1 - 2026-09-19
+
+### Added
+
+- A header link showing the exact installed version and opening its matching immutable GitHub Release.
+
+### Changed
+
+- Precision-trackpad scrolling now accumulates small movements before applying a one-point Scale change, while discrete mouse-wheel input remains one step per event.
+
+### Fixed
+
+- Twitch packs now enforce the current manual-upload limits for static and animated emotes, including the 512 KB and 60-frame animated limits.
+- Very long 7TV animations preserve their encoded GIF timing instead of overflowing the format's per-frame delay field.
+
+### Security
+
+- Animation rendering now samples oversized frame plans before allocating output frames, and MP4 handoff validates decoded-frame count, dimensions, total pixels, and timing metadata.
+
+Package version: `1.1.1`; Git tag: `v1.1.1`. [Release notes](release-notes/1.1.1.md).
+
 ## 1.1 - 2026-09-17
 
 ### Added

@@ -6,7 +6,7 @@
       label: 'Twitch emote',
       hint: 'Three sizes in one Twitch-ready pack.',
       sizes: [112, 56, 28],
-      limit: '1 MB max',
+      limit: '100 KB PNG · 512 KB GIF · 60f max',
       export: 'Export Twitch pack',
       channel: 'STREAM CHAT',
     },
@@ -20,9 +20,9 @@
     },
     seventv: {
       label: '7TV emote',
-      hint: 'One upload, up to 1000 × 1000 · 7 MB · 1000 frames. 7TV generates the 1×–4× sizes and preserves wide emotes.',
+      hint: 'One upload, up to 1000 × 1000 · 7 MB. 7TV generates the 1×–4× sizes, preserves wide emotes, and may sample long animations.',
       sizes: [1000],
-      limit: '7 MB max · 1000f max',
+      limit: '7 MB max',
       export: 'Export 7TV emote',
       channel: 'STREAM CHAT',
     },
@@ -300,7 +300,7 @@
     syncSliderValue('end-frame', animationRange().end + 1);
     const duration = rangeDuration();
     $('animation-range-summary').textContent =
-      `Frames ${animationRange().start + 1}–${animationRange().end + 1} · ${(duration / 1000).toFixed(1)} s · ${mode === 'seventv' ? '1000 frames max' : '5 s max'}`;
+      `Frames ${animationRange().start + 1}–${animationRange().end + 1} · ${(duration / 1000).toFixed(1)} s · ${mode === 'seventv' ? 'long animations may be sampled' : '5 s max'}`;
     syncTimeline();
   }
   function configureAnimation() {
@@ -1049,6 +1049,11 @@
   });
   const canvas = $('editor-canvas'),
     guides = $('alignment-guides');
+  const wheelPixelThreshold = 40,
+    wheelGestureGap = 250;
+  let wheelPixels = 0,
+    wheelDirection = 0,
+    wheelTime = 0;
   function showGuides(x, y) {
     guides.classList.toggle('show-x', x);
     guides.classList.toggle('show-y', y);
@@ -1056,9 +1061,33 @@
   canvas.addEventListener(
     'wheel',
     (e) => {
-      if (!source || importing || exporting || e.ctrlKey || e.metaKey || !e.deltaY) return;
+      if (
+        !source ||
+        importing ||
+        exporting ||
+        e.ctrlKey ||
+        e.metaKey ||
+        !Number.isFinite(e.deltaY) ||
+        !e.deltaY
+      ) {
+        wheelPixels = 0;
+        wheelDirection = 0;
+        return;
+      }
       e.preventDefault();
-      commitSliderValue('zoom', Number($('zoom').value) - Math.sign(e.deltaY));
+      const direction = e.deltaY < 0 ? 1 : -1;
+      if (direction !== wheelDirection || e.timeStamp - wheelTime > wheelGestureGap) {
+        wheelPixels = 0;
+      }
+      wheelDirection = direction;
+      wheelTime = e.timeStamp;
+      wheelPixels +=
+        (e.deltaMode || 0) === 0
+          ? Math.min(Math.abs(e.deltaY), wheelPixelThreshold)
+          : wheelPixelThreshold;
+      if (wheelPixels < wheelPixelThreshold) return;
+      wheelPixels -= wheelPixelThreshold;
+      commitSliderValue('zoom', Number($('zoom').value) + direction);
     },
     { passive: false },
   );

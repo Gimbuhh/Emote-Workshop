@@ -12,13 +12,10 @@ const assert = require('node:assert/strict');
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(pathToFileURL(path.resolve(file)).href);
       const versionLink = page.locator('.version-link');
-      assert.equal(
-        await versionLink.textContent(),
-        `v${require('../package.json').version.split('.').slice(0, 2).join('.')}`,
-      );
+      assert.equal(await versionLink.textContent(), `v${require('../package.json').version}`);
       assert.equal(
         await versionLink.getAttribute('href'),
-        'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md',
+        `https://github.com/Gimbuhh/Emote-Workshop/releases/tag/v${require('../package.json').version}`,
       );
       assert.equal(await versionLink.getAttribute('target'), '_blank');
       assert.equal(await versionLink.getAttribute('rel'), 'noopener noreferrer');
@@ -123,6 +120,17 @@ const assert = require('node:assert/strict');
         assert.equal(await wheel({ deltaY: -500, deltaMode }), true);
         assert.equal(await page.locator('#zoom').inputValue(), String(91 + deltaMode));
       }
+      for (let index = 0; index < 10; index++) {
+        assert.equal(await wheel({ deltaY: -0.1 }), true);
+      }
+      assert.equal(await page.locator('#zoom').inputValue(), '93');
+      assert.equal(await wheel({ deltaY: -20 }), true);
+      assert.equal(await wheel({ deltaY: -20 }), true);
+      assert.equal(await page.locator('#zoom').inputValue(), '94');
+      assert.equal(await wheel({ deltaY: 20 }), true);
+      assert.equal(await page.locator('#zoom').inputValue(), '94');
+      assert.equal(await wheel({ deltaY: 20 }), true);
+      assert.equal(await page.locator('#zoom').inputValue(), '93');
       for (const options of [
         { deltaY: 0, deltaX: 120 },
         { deltaY: -120, ctrlKey: true },
@@ -152,7 +160,7 @@ const assert = require('node:assert/strict');
       assert.equal(await page.locator('#zoom').inputValue(), '93');
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
       assert.deepEqual(errors, []);
-      console.log(`${file}: rectangular dragging, snapping, and 1% wheel zoom OK`);
+      console.log(`${file}: rectangular dragging, snapping, and precision wheel zoom OK`);
       await page.close();
     }
   } finally {
