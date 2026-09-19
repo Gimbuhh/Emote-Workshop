@@ -27,7 +27,7 @@
     "check": "npm run check:syntax && npm run format:check && npm run check:build"
   },
   "devDependencies": {
-    "playwright": "1.62.1",
+    "playwright": "1.63.0",
     "prettier": "3.9.7"
   }
 }
