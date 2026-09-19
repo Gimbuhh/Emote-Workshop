@@ -4,7 +4,7 @@ A self-contained, offline emote editor for Twitch, Discord, and 7TV. Open **Emot
 
 Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), pick a destination, adjust framing, and export:
 
-- **Twitch** emote packs at 112×112, 56×56, 28×28
+- **Twitch** manual-upload packs at 112×112, 56×56, and 28×28, with animated exports limited to 512 KB and 60 frames
 - **Discord** emoji at 128×128 and stickers at 320×320
 - **7TV** up to 1000×1000 and 7 MB, preserving aspect ratio without upscaling
 

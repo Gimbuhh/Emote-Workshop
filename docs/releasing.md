@@ -3,7 +3,7 @@
 1. Start from the latest verified release and make application changes on a version-specific branch.
 2. Update the authoritative version in `package.json` and `package-lock.json`.
 3. Display the exact release version in the header and link it to that version's immutable GitHub Release.
-4. Add `release-notes/<version>.md` and a matching dated `CHANGELOG.md` entry. Both describe published-version-to-published-version user outcomes; omit test-only and repository-maintenance work.
+4. Add a release-note file and a matching dated `CHANGELOG.md` entry. Use the displayed two-part version for an established `.0` release (`release-notes/1.1.md` for package `1.1.0`) and the full version for patch releases (`release-notes/1.1.1.md`). Both describe published-version-to-published-version user outcomes; omit test-only and repository-maintenance work.
 5. Run `npm run build` after any `dist/` change.
 6. Run `npm run check`, `npm test`, and `npm run test:gif:verify`.
 7. Run `npm run release:verify -- <version>` before committing the release.

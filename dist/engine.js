@@ -51,9 +51,18 @@ function imageWorker() {
     animated = false;
   const MAX_BYTES = 100 * 1024 * 1024,
     MAX_PIXELS = 48 * 1000 * 1000,
-    MAX_SOURCE_FRAMES = 120;
+    MAX_SOURCE_FRAMES = 120,
+    MAX_VIDEO_FRAMES = 240,
+    MAX_VIDEO_PIXELS = 64 * 1024 * 1024,
+    MAX_RENDER_PIXELS = 32 * 1024 * 1024;
   const presets = {
-    twitch: { sizes: [112, 56, 28], limit: 1024 * 1024, duration: 5000 },
+    twitch: {
+      sizes: [112, 56, 28],
+      limit: 100 * 1024,
+      animatedLimit: 512 * 1024,
+      duration: 5000,
+      maxFrames: 60,
+    },
     emoji: { sizes: [128], limit: 256 * 1024 - 1, duration: 5000 },
     sticker: { sizes: [320], limit: 512 * 1024, duration: 5000 },
     seventv: { sizes: [1000], limit: 7 * 1000 * 1000, duration: Infinity, maxFrames: 1000 },
@@ -381,13 +390,38 @@ function imageWorker() {
     }
   }
   async function loadVideo(videoFrames, frameDelays, details) {
-    if (
-      !Array.isArray(videoFrames) ||
-      videoFrames.length < 2 ||
-      videoFrames.length !== frameDelays.length
-    )
-      throw new Error('The MP4 could not be converted into animation frames.');
     try {
+      if (
+        !Array.isArray(videoFrames) ||
+        !Array.isArray(frameDelays) ||
+        videoFrames.length < 2 ||
+        videoFrames.length !== frameDelays.length
+      )
+        throw new Error('The MP4 could not be converted into animation frames.');
+      if (videoFrames.length > MAX_VIDEO_FRAMES)
+        throw new Error(`MP4 imports allow at most ${MAX_VIDEO_FRAMES} decoded frames.`);
+      let sourcePixels = 0,
+        sourceDuration = 0;
+      for (let index = 0; index < videoFrames.length; index++) {
+        const frame = videoFrames[index],
+          delay = frameDelays[index];
+        if (
+          !Number.isInteger(frame?.width) ||
+          !Number.isInteger(frame?.height) ||
+          frame.width < 1 ||
+          frame.height < 1 ||
+          Math.max(frame.width, frame.height) > 512
+        )
+          throw new Error('Decoded MP4 frames must be at most 512 pixels on their longest side.');
+        sourcePixels += frame.width * frame.height;
+        if (sourcePixels > MAX_VIDEO_PIXELS)
+          throw new Error('The decoded MP4 is too large to process safely. Shorten the video.');
+        if (!Number.isFinite(delay) || delay <= 0)
+          throw new Error('The MP4 contains invalid frame timing.');
+        sourceDuration += delay;
+        if (!Number.isFinite(sourceDuration))
+          throw new Error('The MP4 contains invalid frame timing.');
+      }
       const measured = findBounds(videoFrames),
         preview = await measured.thumb.convertToBlob({ type: 'image/png' });
       for (const frame of frames) frame.close();
@@ -415,7 +449,7 @@ function imageWorker() {
         duration: frameDelays.reduce((a, b) => a + b, 0),
       };
     } catch (error) {
-      for (const frame of videoFrames) frame.close();
+      if (Array.isArray(videoFrames)) for (const frame of videoFrames) frame?.close?.();
       throw error;
     }
   }
@@ -602,7 +636,15 @@ function imageWorker() {
     }
     return { table, lookup };
   }
-  function encodeGif(rgbaFrames, width, height, frameDelays, paletteSize) {
+  function encodeGif(rgbaFrames, width, height, frameDelays, paletteSize, maxFrames = 1000) {
+    if (
+      !Array.isArray(rgbaFrames) ||
+      !Array.isArray(frameDelays) ||
+      rgbaFrames.length !== frameDelays.length ||
+      !Number.isInteger(maxFrames) ||
+      maxFrames < 1
+    )
+      throw new Error('Invalid GIF animation data.');
     const { table, lookup } = makePalette(rgbaFrames, paletteSize),
       colorBits = Math.log2(table.length / 3),
       sizeCode = colorBits - 1,
@@ -632,6 +674,8 @@ function imageWorker() {
     for (let f = 0; f < rgbaFrames.length; f++) {
       const rgba = rgbaFrames[f],
         pixels = new Uint8Array(width * height);
+      if (!Number.isFinite(frameDelays[f]) || frameDelays[f] <= 0)
+        throw new Error('This animation contains invalid frame timing.');
       for (let i = 0, p = 0; i < pixels.length; i++, p += 4)
         pixels[i] =
           rgba[p + 3] < 128
@@ -639,15 +683,29 @@ function imageWorker() {
             : lookup[((rgba[p] >> 3) << 10) | ((rgba[p + 1] >> 3) << 5) | (rgba[p + 2] >> 3)];
       elapsed += frameDelays[f];
       const delay = Math.max(2, Math.round(elapsed / 10) - ticks);
+      if (!Number.isFinite(delay)) throw new Error('This animation contains invalid frame timing.');
       ticks += delay;
-      const previous = indexed[indexed.length - 1];
-      if (
-        previous &&
-        pixels.every((v, i) => v === previous.pixels[i]) &&
-        previous.delay + delay <= 65535
-      )
-        previous.delay += delay;
-      else indexed.push({ pixels, delay });
+      let remaining = delay,
+        previous = indexed[indexed.length - 1],
+        same = previous && pixels.every((v, i) => v === previous.pixels[i]);
+      while (remaining) {
+        const available = same ? 65535 - previous.delay : 0;
+        if (available > 0) {
+          const merged = Math.min(available, remaining);
+          previous.delay += merged;
+          remaining -= merged;
+          continue;
+        }
+        const chunk = Math.min(65535, remaining);
+        if (indexed.length >= maxFrames)
+          throw new Error(
+            `This destination allows at most ${maxFrames} timing frames. Shorten the animation.`,
+          );
+        indexed.push({ pixels, delay: chunk });
+        remaining -= chunk;
+        previous = indexed[indexed.length - 1];
+        same = true;
+      }
     }
     let previous = null;
     for (let f = 0; f < indexed.length; f++) {
@@ -776,11 +834,28 @@ function imageWorker() {
     for (let i = 3; i < rgba.length; i += 4) if (rgba[i]) return true;
     return false;
   }
+  function checkRenderBudget(width, height, frameCount) {
+    if (width * height * frameCount > MAX_RENDER_PIXELS) {
+      throw new Error(
+        'This animation is too large to process safely. Shorten it or reduce its dimensions.',
+      );
+    }
+  }
+  function renderPlan(size, height, preset, range, speed) {
+    const complete = selectedAnimation(preset.duration, 1, range, speed),
+      renderFrameLimit = preset.renderMaxFrames || 1000;
+    if (complete.selected.length > renderFrameLimit)
+      throw new Error(
+        `This destination allows at most ${renderFrameLimit} frames. Shorten the animation.`,
+      );
+    const allowedFrames = Math.max(1, Math.floor(MAX_RENDER_PIXELS / (size * height))),
+      step = Math.max(1, Math.ceil(complete.selected.length / allowedFrames));
+    return step === 1 ? complete : selectedAnimation(preset.duration, step, range, speed);
+  }
   function renderFrames(size, state, preset, range, height = size) {
-    const plan = selectedAnimation(preset.duration, 1, range, state.speed ?? 100),
+    const plan = renderPlan(size, height, preset, range, state.speed ?? 100),
       rgba = [];
-    if (plan.selected.length > (preset.maxFrames || 1000))
-      throw new Error('This destination allows at most 1000 frames. Shorten the animation.');
+    checkRenderBudget(size, height, plan.selected.length);
     for (const index of plan.selected) {
       const canvas = makeCanvas(size, height),
         ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -816,6 +891,7 @@ function imageWorker() {
     const rendered = renderFrames(size, state, preset, range, height),
       posterCanvas = makeCanvas(size, height),
       posterContext = posterCanvas.getContext('2d'),
+      limit = preset.animatedLimit || preset.limit,
       attempts =
         mode === 'sticker'
           ? [
@@ -852,7 +928,7 @@ function imageWorker() {
               }
             : encodeGif(rgba, size, height, frameDelays, attempt.p),
         bytes = encoded.bytes;
-      if (bytes.length <= preset.limit && encoded.frames <= (preset.maxFrames || 1000)) {
+      if (bytes.length <= limit && encoded.frames <= (preset.maxFrames || 1000)) {
         const format = mode === 'sticker' ? 'APNG' : 'GIF',
           type = mode === 'sticker' ? 'image/png' : 'image/gif';
         return {
@@ -860,7 +936,7 @@ function imageWorker() {
           width: size,
           height,
           bytes: bytes.length,
-          limit: preset.limit,
+          limit,
           blob: new Blob([bytes], { type }),
           poster,
           format,

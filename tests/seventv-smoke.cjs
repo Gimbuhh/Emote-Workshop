@@ -63,6 +63,7 @@ const { readFileSync } = require('node:fs');
             });
             bitmap.close();
           }
+          const twitchStatic = await engine.call('render', { mode: 'twitch', state });
           const c = document.createElement('canvas');
           c.width = 260;
           c.height = 128;
@@ -120,30 +121,77 @@ const { readFileSync } = require('node:fs');
           const animationData = Array.from(new Uint8Array(await output.blob.arrayBuffer()));
           const tiny = document.createElement('canvas');
           tiny.width = tiny.height = 1;
-          tiny.getContext('2d').fillRect(0, 0, 1, 1);
-          const excessive = [];
-          for (let f = 0; f < 1001; f++) excessive.push(await createImageBitmap(tiny));
+          const tinyContext = tiny.getContext('2d'),
+            twitchFrames = [];
+          for (let f = 0; f < 120; f++) {
+            tinyContext.fillStyle = `rgb(${f}, ${255 - f}, ${(f * 47) % 256})`;
+            tinyContext.fillRect(0, 0, 1, 1);
+            twitchFrames.push(await createImageBitmap(tiny));
+          }
           await engine.request(
             'loadVideo',
             {
-              videoFrames: excessive,
-              frameDelays: Array(1001).fill(20),
-              details: { width: 1, height: 1, bytes: 1, originalFrames: 1001, sampled: false },
+              videoFrames: twitchFrames,
+              frameDelays: Array(120).fill(40),
+              details: { width: 1, height: 1, bytes: 1, originalFrames: 120, sampled: false },
             },
-            excessive,
+            twitchFrames,
           );
-          let frameCap = false;
+          const twitchFrameLimited = (await engine.call('render', { mode: 'twitch', state }))[0];
+          tinyContext.fillStyle = '#000000';
+          tinyContext.fillRect(0, 0, 1, 1);
+          const excessive = [];
+          for (let f = 0; f < 241; f++) excessive.push(await createImageBitmap(tiny));
+          let sourceFrameCap = false;
           try {
-            await engine.call('render', { mode: 'seventv', state });
+            await engine.request(
+              'loadVideo',
+              {
+                videoFrames: excessive,
+                frameDelays: Array(241).fill(20),
+                details: { width: 1, height: 1, bytes: 1, originalFrames: 241, sampled: false },
+              },
+              excessive,
+            );
           } catch (error) {
-            frameCap = /at most 1000 frames/.test(error.message);
+            sourceFrameCap = /at most 240 decoded frames/.test(error.message);
+          }
+          const invalidTimingFrames = [
+            await createImageBitmap(tiny),
+            await createImageBitmap(tiny),
+          ];
+          let invalidTiming = false;
+          try {
+            await engine.request(
+              'loadVideo',
+              {
+                videoFrames: invalidTimingFrames,
+                frameDelays: [20, Infinity],
+                details: { width: 1, height: 1, bytes: 1, originalFrames: 2, sampled: false },
+              },
+              invalidTimingFrames,
+            );
+          } catch (error) {
+            invalidTiming = /invalid frame timing/.test(error.message);
           }
           return {
             fixtures,
             keys: Object.keys(all),
             rangedDurations,
             animationData,
-            frameCap,
+            sourceFrameCap,
+            invalidTiming,
+            twitchFrameLimited: {
+              bytes: twitchFrameLimited.bytes,
+              frames: twitchFrameLimited.frames,
+              limit: twitchFrameLimited.limit,
+            },
+            twitchStatic: twitchStatic.map((item) => ({
+              size: item.size,
+              bytes: item.bytes,
+              limit: item.limit,
+              frames: item.frames,
+            })),
             animation: {
               width: output.width,
               height: output.height,
@@ -153,7 +201,12 @@ const { readFileSync } = require('node:fs');
               duration,
               reported: output.duration,
             },
-            twitch: all.twitch.map((o) => o.size),
+            twitch: all.twitch.map((o) => ({
+              size: o.size,
+              bytes: o.bytes,
+              limit: o.limit,
+              frames: o.frames,
+            })),
             discordDurations: [all.emoji[0].duration, all.sticker[0].duration],
           };
         } finally {
@@ -176,7 +229,23 @@ const { readFileSync } = require('node:fs');
         assert(f.bytes <= f.limit);
       }
       assert.deepEqual(result.keys, ['twitch', 'emoji', 'sticker', 'seventv']);
-      assert.deepEqual(result.twitch, [112, 56, 28]);
+      assert.deepEqual(
+        result.twitchStatic.map((output) => output.size),
+        [112, 56, 28],
+      );
+      assert(result.twitchStatic.every((output) => output.bytes <= 100 * 1024));
+      assert(result.twitchStatic.every((output) => output.limit === 100 * 1024));
+      assert(result.twitchStatic.every((output) => output.frames === 1));
+      assert.deepEqual(
+        result.twitch.map((output) => output.size),
+        [112, 56, 28],
+      );
+      assert(result.twitch.every((output) => output.bytes <= 512 * 1024));
+      assert(result.twitch.every((output) => output.limit === 512 * 1024));
+      assert(result.twitch.every((output) => output.frames <= 60));
+      assert(result.twitchFrameLimited.bytes <= 512 * 1024);
+      assert.equal(result.twitchFrameLimited.limit, 512 * 1024);
+      assert(result.twitchFrameLimited.frames <= 60);
       assert(result.discordDurations.every((d) => d <= 5000));
       assert.deepEqual(result.rangedDurations, {
         twitch: 3600,
@@ -188,7 +257,8 @@ const { readFileSync } = require('node:fs');
       assert.equal(result.animation.reported, 7200);
       assert(result.animation.frames <= 1000);
       assert(result.animation.bytes <= 7000000);
-      assert(result.frameCap);
+      assert(result.sourceFrameCap);
+      assert(result.invalidTiming);
       await page.locator('#file-input').setInputFiles({
         name: 'wide.gif',
         mimeType: 'image/gif',

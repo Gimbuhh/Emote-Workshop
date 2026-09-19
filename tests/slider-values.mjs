@@ -118,6 +118,11 @@ const context = {
   document: {
     querySelectorAll: (selector) => (selector === '[data-slider-value]' ? inputs : buttons),
   },
+  wheelPixelThreshold: 40,
+  wheelGestureGap: 250,
+  wheelPixels: 0,
+  wheelDirection: 0,
+  wheelTime: 0,
 };
 vm.createContext(context);
 vm.runInContext(
@@ -250,9 +255,10 @@ vm.runInContext(
   section("  canvas.addEventListener(\n    'wheel',", "  canvas.addEventListener('pointerdown'"),
   context,
 );
-function wheel(deltaY) {
+function wheel(deltaY, deltaMode = 0) {
   const event = new Event('wheel', { cancelable: true });
   event.deltaY = deltaY;
+  event.deltaMode = deltaMode;
   context.canvas.dispatchEvent(event);
   return event.defaultPrevented;
 }
@@ -266,9 +272,13 @@ for (const lock of ['importing', 'exporting', 'source']) {
   context[lock] = lock === 'source' ? loadedSource : false;
 }
 assert.equal(wheel(-0.5), true);
+assert.equal(settings.zoom, 90);
+assert.equal(wheel(-39.5), true);
 assert.equal(settings.zoom, 91);
 assert.equal(wheel(1000), true);
 assert.equal(settings.zoom, 90);
+assert.equal(wheel(-1, 1), true);
+assert.equal(settings.zoom, 91);
 assert.equal(settings.x, 0.2);
 assert.equal(settings.y, -0.3);
 console.log(
