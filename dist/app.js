@@ -691,7 +691,8 @@
       $('editor-canvas').hidden = false;
       $('empty-import').hidden = true;
       $('replace').hidden = false;
-      $('canvas-instruction').textContent = 'Drag to reposition · Guides appear at center';
+      $('canvas-instruction').textContent =
+        'Drag to reposition · Scroll to zoom 1% · Guides appear at center';
       $('canvas-title').textContent = modes[mode].label;
       $('canvas-format').textContent = loaded.animated ? 'ANIMATED SOURCE' : 'PNG · TRANSPARENT';
       syncControls();
@@ -1052,6 +1053,15 @@
     guides.classList.toggle('show-x', x);
     guides.classList.toggle('show-y', y);
   }
+  canvas.addEventListener(
+    'wheel',
+    (e) => {
+      if (!source || importing || exporting || e.ctrlKey || e.metaKey || !e.deltaY) return;
+      e.preventDefault();
+      commitSliderValue('zoom', Number($('zoom').value) - Math.sign(e.deltaY));
+    },
+    { passive: false },
+  );
   canvas.addEventListener('pointerdown', (e) => {
     if (!source || importing || exporting || e.button !== 0) return;
     e.preventDefault();

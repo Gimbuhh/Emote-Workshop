@@ -245,4 +245,32 @@ assert.equal(undoContext.animationRanges.emoji.end, 49);
 undoContext.undo(true);
 assert.equal(undoContext.states.emoji.speed, 50);
 assert.equal(undoContext.animationRanges.emoji.end, 24);
-console.log('Exact slider entry, steps, cancellation, reset/undo, locks, and animation bounds OK');
+context.canvas = new Element();
+vm.runInContext(
+  section("  canvas.addEventListener(\n    'wheel',", "  canvas.addEventListener('pointerdown'"),
+  context,
+);
+function wheel(deltaY) {
+  const event = new Event('wheel', { cancelable: true });
+  event.deltaY = deltaY;
+  context.canvas.dispatchEvent(event);
+  return event.defaultPrevented;
+}
+const loadedSource = context.source;
+for (const lock of ['importing', 'exporting', 'source']) {
+  context[lock] = lock === 'source' ? null : true;
+  const before = history.length;
+  assert.equal(wheel(-120), false);
+  assert.equal(settings.zoom, 90);
+  assert.equal(history.length, before);
+  context[lock] = lock === 'source' ? loadedSource : false;
+}
+assert.equal(wheel(-0.5), true);
+assert.equal(settings.zoom, 91);
+assert.equal(wheel(1000), true);
+assert.equal(settings.zoom, 90);
+assert.equal(settings.x, 0.2);
+assert.equal(settings.y, -0.3);
+console.log(
+  'Exact slider entry, steps, cancellation, reset/undo, locks, wheel zoom, and animation bounds OK',
+);

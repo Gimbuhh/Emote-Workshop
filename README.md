@@ -8,7 +8,7 @@ Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), pick a d
 - **Discord** emoji at 128×128 and stickers at 320×320
 - **7TV** up to 1000×1000 and 7 MB, preserving aspect ratio without upscaling
 
-Features: per-destination framing and undo/redo, drag/keyboard positioning with snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, brightness, animation trim (filmstrip with start/end handles), speed control, dark/light chat previews, and file size/dimension limit checks. Animated exports are GIF (Twitch/Discord emoji) or APNG (Discord stickers); static sources export as PNG. All processing is local — the content security policy blocks network access.
+Features: per-destination framing and undo/redo, drag/keyboard positioning with snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, brightness, animation trim (filmstrip with start/end handles), speed control, dark/light chat previews, and file size/dimension limit checks. Animated exports are GIF (Twitch/Discord emoji) or APNG (Discord stickers); static sources export as PNG. All media processing is local, and the content security policy blocks application-initiated network connections. Following an explicit GitHub link leaves the offline editor.
 
 Choose **Try sample** to try it with the included sample artwork.
 
@@ -29,3 +29,11 @@ npm run test:gif:verify  # independent GIF verification (needs Python + Pillow)
 - **Emote Workshop.html** is generated but intentionally committed; rebuild it whenever `dist/` changes.
 - `npm run format` formats; browser tests use an installed Chrome (`npx playwright install chrome`).
 - The GitHub Actions workflow runs these checks on pushes and pull requests.
+
+## Project policies
+
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Release process](docs/releasing.md)
+- [Artwork and third-party assets](ASSETS.md)
+- [MIT license](LICENSE)

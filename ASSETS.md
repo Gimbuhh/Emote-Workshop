@@ -4,10 +4,9 @@
 
 `dist/assets/glorp-64.png` is the padded, optimized favicon/header image. It was
 derived from an earlier `glorp.png`; the original image is not currently included
-in this checkout. The creator, original source URL, and permission terms were not
-provided; they remain unverified.
-Do not treat its presence here as an open-source artwork license. Confirm those
-details before redistributing the artwork or making the repository public.
+in this checkout. The repository owner has confirmed that they have permission to
+redistribute this artwork as part of Emote Workshop. The artwork is not granted
+under the project's MIT license unless its rights holder states otherwise.
 
 The unused intermediate `dist/assets/glorp.png` has been removed.
 
@@ -20,9 +19,10 @@ The original PNG is not included in the checkout. Regenerate the embedded sample
 with `python scripts/optimize-sample.py <path-to-GlorpWitch.png>` using the pinned
 Pillow development dependency, then rebuild the offline edition.
 
-The artwork's original creator/source and permission terms have not been provided.
-Confirm and record them before redistributing it. The offline build embeds the
-same sample; it does not fetch artwork from the network.
+The repository owner has confirmed that they have permission to redistribute the
+sample as part of Emote Workshop. The artwork is not granted under the project's
+MIT license unless its rights holder states otherwise. The offline build embeds
+the same sample; it does not fetch artwork from the network.
 
 ## JSZip
 
@@ -31,5 +31,6 @@ Its upstream URL is <https://github.com/Stuk/jszip>. The upstream copyright and
 license header are retained, and the accompanying license text is in
 `dist/vendor/JSZip-LICENSE.md`. Do not format or strip the vendored library header.
 
-No project-wide license has been selected. Keep third-party notices separate from
-any license chosen for the authored application code.
+The authored application code and documentation are available under the repository's
+MIT license. The separately documented artwork permission and JSZip license remain
+in effect for those assets.

@@ -11,6 +11,26 @@ const assert = require('node:assert/strict');
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(pathToFileURL(path.resolve(file)).href);
+      const versionLink = page.locator('.version-link');
+      assert.equal(
+        await versionLink.textContent(),
+        `v${require('../package.json').version.split('.').slice(0, 2).join('.')}`,
+      );
+      assert.equal(
+        await versionLink.getAttribute('href'),
+        'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md',
+      );
+      assert.equal(await versionLink.getAttribute('target'), '_blank');
+      assert.equal(await versionLink.getAttribute('rel'), 'noopener noreferrer');
+      for (const width of [1280, 375, 320]) {
+        await page.setViewportSize({ width, height: 800 });
+        assert.equal(await versionLink.isVisible(), true);
+        const linkBox = await versionLink.boundingBox();
+        const actionBox = await page.locator('.header-actions').boundingBox();
+        assert(linkBox.x >= 0 && linkBox.x + linkBox.width <= actionBox.x);
+        assert(actionBox.x + actionBox.width <= width);
+      }
+      await page.setViewportSize({ width: 1280, height: 720 });
       await page.click('#platform-seventv');
       const bytes = await page.evaluate(async () => {
         const c = document.createElement('canvas');
@@ -81,8 +101,58 @@ const assert = require('node:assert/strict');
       assert.equal(await page.locator('#width-value').inputValue(), '200');
       await page.click('[data-reset-slider="width"]');
       assert.equal(await page.locator('#width-value').inputValue(), '100');
+      await canvas.hover();
+      const scrollY = await page.evaluate(() => window.scrollY);
+      await page.mouse.wheel(0, -120);
+      await page.waitForFunction(() => document.querySelector('#zoom').value === '91');
+      assert.equal(await page.locator('#zoom-value').inputValue(), '91');
+      assert.equal(await page.evaluate(() => window.scrollY), scrollY);
+      await page.mouse.wheel(0, 120);
+      await page.waitForFunction(() => document.querySelector('#zoom').value === '90');
+      await page.click('#undo');
+      assert.equal(await page.locator('#zoom').inputValue(), '91');
+      await page.click('#redo');
+      assert.equal(await page.locator('#zoom').inputValue(), '90');
+      const wheel = (options) =>
+        canvas.evaluate((element, options) => {
+          const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ...options });
+          element.dispatchEvent(event);
+          return event.defaultPrevented;
+        }, options);
+      for (const deltaMode of [0, 1, 2]) {
+        assert.equal(await wheel({ deltaY: -500, deltaMode }), true);
+        assert.equal(await page.locator('#zoom').inputValue(), String(91 + deltaMode));
+      }
+      for (const options of [
+        { deltaY: 0, deltaX: 120 },
+        { deltaY: -120, ctrlKey: true },
+        { deltaY: -120, metaKey: true },
+      ]) {
+        assert.equal(await wheel(options), false);
+        assert.equal(await page.locator('#zoom').inputValue(), '93');
+      }
+      for (const [limit, deltaY] of [
+        [300, -120],
+        [10, 120],
+      ]) {
+        await page.locator('#zoom-value').fill(String(limit));
+        await page.locator('#zoom-value').press('Enter');
+        assert.equal(await wheel({ deltaY }), true);
+        assert.equal(await page.locator('#zoom').inputValue(), String(limit));
+        await page.click('#undo');
+        assert.equal(await page.locator('#zoom').inputValue(), '93');
+      }
+      await page.locator('#drop-zone').dispatchEvent('wheel', { deltaY: -120 });
+      assert.equal(await page.locator('#zoom').inputValue(), '93');
+      await page.click('#platform-discord');
+      assert.equal(await page.locator('#zoom').inputValue(), '90');
+      await wheel({ deltaY: -120 });
+      assert.equal(await page.locator('#zoom').inputValue(), '91');
+      await page.click('#platform-seventv');
+      assert.equal(await page.locator('#zoom').inputValue(), '93');
+      await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
       assert.deepEqual(errors, []);
-      console.log(`${file}: rectangular dragging and snapping OK`);
+      console.log(`${file}: rectangular dragging, snapping, and 1% wheel zoom OK`);
       await page.close();
     }
   } finally {

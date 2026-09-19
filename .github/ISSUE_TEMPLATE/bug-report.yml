@@ -1,0 +1,37 @@
+name: Bug report
+description: Report a reproducible Emote Workshop problem
+title: '[Bug]: '
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Do not include private media or vulnerability details. Use private vulnerability reporting for security issues.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Describe the behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest reliable sequence. Use non-sensitive sample media where possible.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Emote Workshop version
+      placeholder: v1.1
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and operating system
+      placeholder: Chrome 140 on Windows 11
+    validations:
+      required: true
