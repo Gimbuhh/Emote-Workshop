@@ -14,12 +14,13 @@ const path = require('node:path');
     await page.locator('#width-value').fill('140');
     await page.locator('#width-value').press('Enter');
     await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+    await page.click('#compare-toggle');
     await page.evaluate(() => {
       document.querySelector('#toast').hidden = true;
       document.querySelector('.app-header').scrollIntoView();
     });
     await page.screenshot({
-      path: path.resolve('docs/images/emote-workshop.png'),
+      path: path.resolve('docs/images/emote-workshop-v1.2.png'),
       animations: 'disabled',
     });
   } finally {

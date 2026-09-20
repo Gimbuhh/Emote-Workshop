@@ -11,12 +11,24 @@ function section(start, end) {
   return sourceText.slice(first, last);
 }
 const editor = { id: 'animated-canvas-preview', dataset: {}, hidden: true },
+  originalAnimated = {
+    id: 'original-animated-preview',
+    dataset: {},
+    hidden: true,
+    removeAttribute() {},
+  },
   chat = { id: 'chat', dataset: {} },
   thumbnail = { id: 'thumbnail', dataset: {} },
   canvas = {
     classList: { add() {} },
     getContext() {
       return {};
+    },
+  },
+  originalCanvas = {
+    hidden: true,
+    getContext() {
+      return { drawImage() {} };
     },
   },
   wrap = { style: {} },
@@ -34,7 +46,13 @@ const context = {
   source: { bounds: {}, frameDelays: [80, 160] },
   makeCanvas() {},
   drawArtwork() {},
-  $: (id) => (id === 'editor-canvas' ? canvas : editor),
+  $: (id) =>
+    ({
+      'editor-canvas': canvas,
+      'editor-wrap': wrap,
+      'original-compare-canvas': originalCanvas,
+      'original-animated-preview': originalAnimated,
+    })[id] || editor,
   document: {
     querySelector: () => wrap,
     querySelectorAll: (selector) =>
@@ -54,6 +72,8 @@ const context = {
     preview: { playing: true, timer: 0, revision: 7, frameIndex: 0, frameURL: '' },
   },
   previewRevision: 0,
+  compareMode: false,
+  originalFrameURL: '',
   animationRange: () => ({ start: 0, end: 1 }),
   setTimeout(fn, delay) {
     timers.push({ fn, delay });

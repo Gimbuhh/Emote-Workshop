@@ -14,6 +14,11 @@ assert.match(
   /\.timeline-frames img\s*\{[^}]*-webkit-user-drag:\s*none/,
   'Thumbnails must not start native image drags',
 );
+assert.match(
+  styles,
+  /\.timeline-selection\s*\{[^}]*cursor:\s*grab;[^}]*touch-action:\s*none/,
+  'The selected range must support direct mouse and touch dragging',
+);
 function section(start, end) {
   const a = text.indexOf(start),
     b = text.indexOf(end, a);
@@ -56,6 +61,7 @@ const ids = [
     'timeline-status',
     'trim-start-handle',
     'trim-end-handle',
+    'trim-range',
     'start-frame',
     'end-frame',
   ],
@@ -98,6 +104,12 @@ const context = {
   stopPlaybackClock: () => 1,
   applyPlayback() {},
   renderPlaybackFrame: (surface, index) => previews.push({ surface, index }),
+  schedulePreview() {},
+  clampAnimationRange() {},
+  syncAnimationControls() {
+    syncInputs();
+    context.syncTimeline();
+  },
   commitSliderValue(key, raw) {
     const input = elements[key],
       value = Math.max(Number(input.min), Math.min(Number(input.max), raw));
@@ -144,6 +156,26 @@ start.emit('pointercancel', { pointerId: 4 });
 assert.equal(context.timelineGesture, null);
 assert.equal(context.playback.editor.playing, true);
 assert.equal(context.playback.preview.playing, false);
+range = { start: 4, end: 9 };
+syncInputs();
+context.syncTimeline();
+const selection = elements['trim-range'];
+selection.emit('keydown', { key: 'ArrowRight' });
+assert.deepEqual(range, { start: 5, end: 10 }, 'Arrow keys move the whole selected range');
+selection.emit('keydown', { key: 'Home' });
+assert.deepEqual(range, { start: 0, end: 5 }, 'Home moves the selection to the first frame');
+selection.emit('keydown', { key: 'End' });
+assert.deepEqual(range, { start: 14, end: 19 }, 'End moves the selection to the final frame');
+range = { start: 4, end: 9 };
+syncInputs();
+selection.emit('pointerdown', { button: 0, pointerId: 6, clientX: 50 });
+selection.emit('pointermove', { pointerId: 6, clientX: 90 });
+assert.deepEqual(range, { start: 8, end: 13 }, 'Dragging moves both boundaries together');
+selection.emit('pointermove', { pointerId: 6, clientX: 500 });
+assert.deepEqual(range, { start: 14, end: 19 }, 'Range dragging clamps at the final frame');
+selection.emit('pointerup', { pointerId: 6 });
+assert.equal(context.timelineGesture, null);
+assert.equal(context.playback.editor.playing, true);
 context.importing = true;
 start.emit('pointerdown', { button: 0, pointerId: 5, clientX: 10 });
 assert.equal(context.timelineGesture, null, 'Import lock blocks handles');

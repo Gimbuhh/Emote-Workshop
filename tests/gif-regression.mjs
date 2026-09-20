@@ -11,7 +11,7 @@ function engine(path) {
   assert(anchor.test(text), 'Worker test anchor missing');
   const source = text.replace(
     anchor,
-    'self.test={encodeGif,makePalette,selectedAnimation,checkRenderBudget,renderPlan,setDelays(values){delays=values;frames=Array(values.length);},setAnimation(count,delay=40){delays=Array(count).fill(delay);frames=Array(count);}};let queue=Promise.resolve();',
+    'self.test={encodeGif,makePalette,selectedAnimation,checkRenderBudget,renderPlan,sourceFrameStride,setDelays(values){delays=values;frames=Array(values.length);},setAnimation(count,delay=40){delays=Array(count).fill(delay);frames=Array(count);}};let queue=Promise.resolve();',
   );
   const context = { self: {}, window: {}, TextEncoder, Uint8Array, Uint32Array, Float64Array };
   vm.runInNewContext(source + '\nimageWorker();', context);
@@ -19,6 +19,17 @@ function engine(path) {
 }
 const current = engine(new URL('../dist/engine.js', import.meta.url)),
   old = process.argv[3] ? engine(process.argv[3]) : null;
+assert.equal(
+  current.sourceFrameStride(158, 128, 128),
+  1,
+  'Small animated emotes retain their original frame rate',
+);
+assert.equal(current.sourceFrameStride(241, 128, 128), 2, 'The absolute frame cap still applies');
+assert.equal(
+  current.sourceFrameStride(240, 512, 512),
+  2,
+  'Large animations are sampled to stay within the decoded-pixel budget',
+);
 current.setDelays(Array(240).fill(1000 / 30));
 const selection = current.selectedAnimation(5000);
 assert.equal(selection.duration, 5000);

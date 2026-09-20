@@ -45,16 +45,12 @@ assert(
 for (const path of ['dist/index.html', 'Emote Workshop.html']) {
   const content = read(path);
   const escapedVersion = displayVersion.replaceAll('.', '\\.'),
-    changelogAnchor = `${displayVersion.replaceAll('.', '')}---${changelogHeading[1]}`,
-    changelogUrl = `https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md#${changelogAnchor}`;
+    changelogUrl = 'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md';
   assert(
     new RegExp(`>v${escapedVersion}</a\\s*>`).test(content),
     `${path} does not display v${displayVersion}.`,
   );
-  assert(
-    content.includes(changelogUrl),
-    `${path} does not link to the ${displayVersion} changelog entry.`,
-  );
+  assert(content.includes(`href="${changelogUrl}"`), `${path} does not link to the changelog.`);
 }
 
 const buildCheck = spawnSync(process.execPath, ['build-offline.mjs', '--check'], {

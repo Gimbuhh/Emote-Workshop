@@ -7,11 +7,12 @@ A private, browser-based emote editor for Twitch, Discord, and 7TV.
 1. **[Open Emote Workshop](https://emotes.gimba.uk)** in Chrome or Edge.
 2. Import an image, animation, or MP4 — or choose **Try sample**.
 3. Select Twitch, Discord, or 7TV and adjust the framing while checking the live previews.
-4. Enter a file name and export the current destination or every destination at once.
+4. Use **Compare** to inspect the original beside the converted file, including its format and size.
+5. Enter a file name and export the current destination or every destination at once.
 
 Everything is processed on your device; no account or upload is required. For a fully offline copy, download and open **Emote Workshop.html** in Chrome or Edge.
 
-![Emote Workshop editing an emote for 7TV](docs/images/emote-workshop.png)
+![Emote Workshop editing an emote for 7TV](docs/images/emote-workshop-v1.2.png)
 
 ## What it makes
 
@@ -21,7 +22,11 @@ Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), pick a d
 - **Discord** emoji at 128×128 and stickers at 320×320
 - **7TV** up to 1000×1000 and 7 MB, preserving aspect ratio without upscaling
 
-Features: per-destination framing and undo/redo, drag/keyboard positioning with snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, brightness, animation trim (filmstrip with start/end handles), speed control, dark/light chat previews, and file size/dimension limit checks. Animated exports are GIF (Twitch/Discord emoji) or APNG (Discord stickers); static sources export as PNG. All media processing is local, and the content security policy blocks application-initiated network connections. Following an explicit GitHub link leaves the offline editor.
+The editor keeps separate framing for each destination, with undo/redo, drag or keyboard positioning, center snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, and brightness. **Keep canvas filled** can update Scale automatically while Width or Height changes.
+
+For animation, use the filmstrip to resize or drag the selected frame range, adjust playback speed, and preview the canvas independently from the chat example. Discord and Twitch clips are automatically kept within their five-second limit in either speed direction. Animated exports are GIF (Twitch/Discord emoji) or APNG (Discord stickers); static sources export as PNG.
+
+The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local, and the content security policy blocks application-initiated network connections. Following an explicit GitHub link leaves the offline editor.
 
 Choose **Try sample** to try it with the included sample artwork.
 

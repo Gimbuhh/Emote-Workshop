@@ -118,6 +118,10 @@ const assert = require('node:assert/strict');
       assert.equal(result.duration, result.reportedDuration);
       assert(Math.abs(result.sourceDuration - result.duration) <= 10);
       assert(result.stress.bytes <= result.limit);
+      assert(
+        result.stress.frames >= 30,
+        `GIF fallback discarded too many motion frames: ${JSON.stringify(result.stress)}`,
+      );
       assert.equal(result.stress.duration, 2000);
       assert.deepEqual(errors, []);
       console.log(file, result);

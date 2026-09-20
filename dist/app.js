@@ -4,7 +4,7 @@
   const modes = {
     twitch: {
       label: 'Twitch emote',
-      hint: 'Three sizes in one Twitch-ready pack.',
+      hint: '112, 56, and 28 px · PNG or GIF',
       sizes: [112, 56, 28],
       limit: '100 KB PNG · 512 KB GIF · 60f max',
       export: 'Export Twitch pack',
@@ -12,7 +12,7 @@
     },
     emoji: {
       label: 'Discord emoji',
-      hint: 'One file for messages and reactions.',
+      hint: '128 × 128 px · PNG or GIF · Under 256 KB',
       sizes: [128],
       limit: 'Under 256 KB',
       export: 'Export emoji',
@@ -20,7 +20,7 @@
     },
     seventv: {
       label: '7TV emote',
-      hint: 'One upload, up to 1000 × 1000 · 7 MB. Exports stay below 7TV’s 3:1 aspect-ratio limit; 7TV generates the 1×–4× sizes and may sample long animations.',
+      hint: 'Up to 1000 px · 7 MB · Below 3:1',
       sizes: [1000],
       limit: '7 MB max',
       export: 'Export 7TV emote',
@@ -28,7 +28,7 @@
     },
     sticker: {
       label: 'Discord sticker',
-      hint: 'A 320 px sticker with transparent edges.',
+      hint: '320 × 320 px · PNG or APNG · 512 KB',
       sizes: [320],
       limit: '512 KB max',
       export: 'Export sticker',
@@ -70,7 +70,10 @@
     exporting = false,
     dragGesture = null,
     colorGesture = false,
-    toastTimer;
+    toastTimer,
+    compareMode = false,
+    comparePlaybackRevision = 0,
+    originalFrameURL = '';
   let animationRanges = modeMap(() => ({ start: 0, end: 1 }));
   const playback = {
     editor: { playing: true, timer: 0, revision: 0, frameIndex: 0, frameURL: '' },
@@ -121,7 +124,7 @@
     $('framing').disabled = !source || locked;
     $('finish').disabled = !source || locked;
     $('animation-trim').disabled = !source || !source.animated || locked;
-    for (const id of ['trim-start-handle', 'trim-end-handle'])
+    for (const id of ['trim-range', 'trim-start-handle', 'trim-end-handle'])
       $(id).disabled = !source?.animated || locked;
     for (const id of ['import-top', 'replace', 'empty-import']) $(id).disabled = locked || !engine;
     $('sample').disabled = locked || !engine || !window.EMOTE_SAMPLE;
@@ -136,6 +139,7 @@
       $(id).disabled = locked;
     $('export-current').disabled = !source || !outputs.length || busy || locked;
     $('export-all').disabled = !source || busy || locked;
+    $('compare-toggle').disabled = !source || !outputs.length || busy || locked;
     $('editor-canvas').setAttribute('aria-disabled', String(!source || locked));
     syncFramingHints();
     syncHistory();
@@ -238,7 +242,7 @@
       d = editorSize();
     c.width = d.width;
     c.height = d.height;
-    document.querySelector('.canvas-wrap').style.aspectRatio = `${d.width} / ${d.height}`;
+    $('editor-wrap').style.aspectRatio = `${d.width} / ${d.height}`;
     if (editorImage)
       drawArtwork(
         c.getContext('2d'),
@@ -249,6 +253,24 @@
         makeCanvas,
         c.height,
       );
+    drawOriginalCompare();
+  }
+  function drawOriginalCompare() {
+    const canvas = $('original-compare-canvas'),
+      animated = $('original-animated-preview');
+    if (!compareMode || !editorImage) {
+      canvas.hidden = true;
+      animated.hidden = true;
+      return;
+    }
+    const ratio = Math.min(1, 800 / Math.max(editorImage.width, editorImage.height));
+    canvas.width = Math.max(1, Math.round(editorImage.width * ratio));
+    canvas.height = Math.max(1, Math.round(editorImage.height * ratio));
+    canvas.getContext('2d').drawImage(editorImage, 0, 0, canvas.width, canvas.height);
+    $('editor-wrap').style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+    const animatedFrameReady = Boolean(source?.animated && originalFrameURL);
+    canvas.hidden = animatedFrameReady;
+    animated.hidden = !animatedFrameReady;
   }
   function stopPlaybackClock(surface) {
     const player = playback[surface];
@@ -264,6 +286,12 @@
     if (player.frameURL) URL.revokeObjectURL(player.frameURL);
     player.frameURL = '';
     player.frameIndex = animationRange().start;
+    if (surface === 'editor') {
+      if (originalFrameURL) URL.revokeObjectURL(originalFrameURL);
+      originalFrameURL = '';
+      $('original-animated-preview').removeAttribute('src');
+      drawOriginalCompare();
+    }
   }
   function clearPlaybackFrames() {
     for (const surface of Object.keys(playback)) clearPlaybackFrame(surface);
@@ -271,12 +299,118 @@
   function cleanURLs() {
     stopPlaybackClocks();
     clearPlaybackFrames();
+    clearConvertedPreview();
     for (const url of outputURLs) URL.revokeObjectURL(url);
     outputURLs = [];
     outputMedia = [];
   }
   function expectedFormat() {
     return source?.animated ? (mode === 'sticker' ? 'APNG' : 'GIF') : 'PNG';
+  }
+  function comparisonMedia() {
+    return outputMedia[0] || null;
+  }
+  function clearConvertedPreview() {
+    comparePlaybackRevision++;
+    const image = $('converted-preview'),
+      paused = $('converted-paused'),
+      live = $('converted-live-preview');
+    image.removeAttribute('src');
+    image.hidden = true;
+    paused.hidden = true;
+    paused.getContext('2d').clearRect(0, 0, paused.width, paused.height);
+    if (compareMode && source) {
+      const editor = $('editor-canvas');
+      live.width = editor.width;
+      live.height = editor.height;
+      live.getContext('2d').drawImage(editor, 0, 0);
+      live.hidden = false;
+      $('converted-wrap').style.aspectRatio = `${editor.width} / ${editor.height}`;
+    } else live.hidden = true;
+    $('compare-converted-meta').textContent = source ? 'Live preview' : 'No export yet';
+  }
+  function syncConvertedPreview(restart = false) {
+    const media = comparisonMedia(),
+      pane = $('converted-pane'),
+      image = $('converted-preview'),
+      paused = $('converted-paused'),
+      live = $('converted-live-preview');
+    pane.hidden = !compareMode;
+    $('compare-original-meta').textContent = source
+      ? `${source.type} · ${formatBytes(source.bytes)}`
+      : 'Source preview';
+    if (!compareMode || !media) {
+      clearConvertedPreview();
+      return;
+    }
+    $('converted-wrap').style.aspectRatio = `${media.width} / ${media.height}`;
+    live.hidden = true;
+    $('compare-converted-meta').textContent =
+      `${media.format} · ${formatBytes(media.bytes)}${media.frames > 1 ? ` · ${media.frames}f` : ''}`;
+    if (!source.animated) {
+      comparePlaybackRevision++;
+      paused.hidden = true;
+      image.hidden = false;
+      if (image.src !== media.url) image.src = media.url;
+      return;
+    }
+    if (!playback.editor.playing) {
+      const revision = ++comparePlaybackRevision;
+      const width = image.naturalWidth || media.width,
+        height = image.naturalHeight || media.height;
+      paused.width = width;
+      paused.height = height;
+      const context = paused.getContext('2d');
+      context.clearRect(0, 0, width, height);
+      if (image.complete && image.naturalWidth) context.drawImage(image, 0, 0, width, height);
+      else {
+        const poster = new Image();
+        poster.onload = () => {
+          if (
+            revision === comparePlaybackRevision &&
+            compareMode &&
+            !playback.editor.playing &&
+            comparisonMedia() === media
+          )
+            context.drawImage(poster, 0, 0, width, height);
+        };
+        poster.src = media.posterUrl;
+      }
+      image.hidden = true;
+      paused.hidden = false;
+      return;
+    }
+    paused.hidden = true;
+    image.hidden = false;
+    if (!restart && image.src === media.url) return;
+    const revision = ++comparePlaybackRevision;
+    image.src = media.posterUrl;
+    requestAnimationFrame(() => {
+      if (
+        revision === comparePlaybackRevision &&
+        compareMode &&
+        playback.editor.playing &&
+        comparisonMedia() === media
+      )
+        image.src = media.url;
+    });
+  }
+  function setCompareSide(side) {
+    const next = side === 'original' ? 'original' : 'converted';
+    $('drop-zone').dataset.compareSide = next;
+    $('compare-original').setAttribute('aria-pressed', String(next === 'original'));
+    $('compare-converted').setAttribute('aria-pressed', String(next === 'converted'));
+  }
+  function setCompareMode(active) {
+    compareMode = Boolean(active && source && outputMedia.length);
+    $('compare-toggle').setAttribute('aria-pressed', String(compareMode));
+    $('drop-zone').classList.toggle('comparing', compareMode);
+    $('converted-pane').hidden = !compareMode;
+    drawEditor();
+    if (compareMode && source.animated) {
+      playback.editor.frameIndex = animationRange().start;
+      applyPlayback('editor', true);
+    } else syncConvertedPreview(compareMode);
   }
   const animationPayload = () =>
     source?.animated ? { start: animationRange().start, end: animationRange().end } : null;
@@ -298,6 +432,22 @@
         .reduce((sum, delay) => sum + playbackDelay(delay, states[destination].speed ?? 100), 0);
     while (destination !== 'seventv' && duration() > 5000 && range.end > range.start + 1)
       range.end--;
+  }
+  function fitAnimationRangeToLimit(destination = mode) {
+    clampAnimationRange(destination);
+    if (destination === 'seventv') return;
+    const range = animationRanges[destination],
+      total = source?.frameDelays?.length || 0,
+      speed = states[destination].speed ?? 100;
+    let duration = source.frameDelays
+      .slice(range.start, range.end + 1)
+      .reduce((sum, delay) => sum + playbackDelay(delay, speed), 0);
+    while (range.end < total - 1) {
+      const nextDelay = playbackDelay(source.frameDelays[range.end + 1], speed);
+      if (duration + nextDelay > 5000) break;
+      range.end++;
+      duration += nextDelay;
+    }
   }
   function syncAnimationControls() {
     const total = source?.frameDelays?.length || 2;
@@ -342,6 +492,15 @@
       handle.setAttribute('aria-valuenow', input.value);
       handle.setAttribute('aria-valuetext', `Frame ${input.value} of ${total}`);
     }
+    const selection = $('trim-range'),
+      length = range.end - range.start;
+    selection.setAttribute('aria-valuemin', '1');
+    selection.setAttribute('aria-valuemax', String(total - length));
+    selection.setAttribute('aria-valuenow', String(range.start + 1));
+    selection.setAttribute(
+      'aria-valuetext',
+      `Frames ${range.start + 1} through ${range.end + 1} of ${total}`,
+    );
   }
   function clearTimeline() {
     if (timelineGesture) {
@@ -382,7 +541,8 @@
         img.draggable = false;
         strip.append(img);
       }
-      $('timeline-status').textContent = 'Drag the handles to trim. Arrow keys adjust one frame.';
+      $('timeline-status').textContent =
+        'Drag the selection to move it; drag the handles to resize. Arrow keys adjust one frame.';
     } catch {
       if (revision === timelineRevision)
         $('timeline-status').textContent =
@@ -391,7 +551,7 @@
       if (revision === timelineRevision) strip.setAttribute('aria-busy', 'false');
     }
   }
-  function displayPlaybackFrame(surface, blob, index) {
+  function displayPlaybackFrame(surface, blob, index, original = null) {
     const player = playback[surface],
       url = URL.createObjectURL(blob);
     if (player.frameURL) URL.revokeObjectURL(player.frameURL);
@@ -403,6 +563,15 @@
       animatedCanvas.dataset.frameIndex = String(index);
       animatedCanvas.hidden = false;
       $('editor-canvas').classList.add('playback-hidden');
+      if (original?.blob && compareMode) {
+        if (originalFrameURL) URL.revokeObjectURL(originalFrameURL);
+        originalFrameURL = URL.createObjectURL(original.blob);
+        const originalPreview = $('original-animated-preview');
+        originalPreview.src = originalFrameURL;
+        originalPreview.hidden = false;
+        $('original-compare-canvas').hidden = true;
+        $('editor-wrap').style.aspectRatio = `${original.width} / ${original.height}`;
+      }
       return;
     }
     for (const img of document.querySelectorAll(
@@ -429,9 +598,17 @@
           state: settings,
           size: size.width,
           height: size.height,
+          includeSource: surface === 'editor' && compareMode,
         });
       if (token !== player.revision || rev !== previewRevision || destination !== mode) return;
-      displayPlaybackFrame(surface, result.blob, result.index);
+      displayPlaybackFrame(
+        surface,
+        result.blob,
+        result.index,
+        result.sourceBlob
+          ? { blob: result.sourceBlob, width: result.sourceWidth, height: result.sourceHeight }
+          : null,
+      );
       if (!player.playing) return;
       const next = result.index >= animationRange().end ? animationRange().start : result.index + 1,
         delay = playbackDelay(source.frameDelays[result.index]);
@@ -484,6 +661,7 @@
         $('animated-canvas-preview').hidden = true;
         $('animated-canvas-preview').removeAttribute('src');
         $('editor-canvas').classList.remove('playback-hidden');
+        syncConvertedPreview();
       }
       return;
     }
@@ -502,8 +680,33 @@
       const token = stopPlaybackClock(surface);
       if (restart || !player.frameURL) renderPlaybackFrame(surface, player.frameIndex, token);
     }
+    if (isEditor) syncConvertedPreview(restart);
+  }
+  function syncSizeComparison(items = []) {
+    $('original-bytes').textContent = source
+      ? `${source.type} · ${formatBytes(source.bytes)}`
+      : '—';
+    $('result-size-label').textContent = mode === 'twitch' ? 'Export · 3 files' : 'Export';
+    const total = items.reduce((sum, item) => sum + item.bytes, 0);
+    const formats = [...new Set(items.map((item) => item.format).filter(Boolean))];
+    $('result-bytes').textContent = items.length
+      ? `${formats.join(' / ')} · ${formatBytes(total)}`
+      : '—';
+    const change = $('size-change');
+    change.removeAttribute('data-reduced');
+    if (!source) change.textContent = 'Import a file to compare sizes.';
+    else if (!items.length) change.textContent = 'Waiting for export';
+    else {
+      const percent = Math.round(Math.abs(1 - total / source.bytes) * 100);
+      change.textContent =
+        percent === 0
+          ? 'About the same size'
+          : `${percent}% ${total < source.bytes ? 'smaller' : 'larger'}`;
+      if (total < source.bytes) change.dataset.reduced = 'true';
+    }
   }
   function populateOutputs(items = []) {
+    syncSizeComparison(items);
     cleanURLs();
     const list = $('output-list');
     list.replaceChildren();
@@ -520,10 +723,20 @@
           posterUrl = item.poster ? URL.createObjectURL(item.poster) : url;
         outputURLs.push(url);
         if (posterUrl !== url) outputURLs.push(posterUrl);
-        const media = { size, url, posterUrl };
+        const media = {
+          size,
+          width: item.width,
+          height: item.height,
+          bytes: item.bytes,
+          format: item.format,
+          frames: item.frames,
+          url,
+          posterUrl,
+        };
         outputMedia.push(media);
         const img = new Image();
         img.alt = `${size} pixel export preview`;
+        img.draggable = false;
         if (source?.animated) {
           img.dataset.animatedUrl = url;
           img.dataset.posterUrl = posterUrl;
@@ -584,6 +797,7 @@
     stopPlaybackClocks();
     clearPlaybackFrames();
     outputs = [];
+    syncSizeComparison();
     busy = Boolean(source);
     $('export-status').textContent = source ? 'Preparing export…' : 'Waiting for an image';
     $('animation-toggle').hidden = true;
@@ -591,6 +805,7 @@
     $('animated-canvas-preview').hidden = true;
     $('animated-canvas-preview').removeAttribute('src');
     $('editor-canvas').classList.remove('playback-hidden');
+    clearConvertedPreview();
     setEnabled();
   }
   function schedulePreview() {
@@ -612,11 +827,6 @@
       outputs = result;
       populateOutputs(result);
       $('export-status').textContent = 'All files checked';
-      $('canvas-format').textContent = source.animated
-        ? mode === 'sticker'
-          ? 'ANIMATED APNG'
-          : 'ANIMATED GIF'
-        : 'PNG · TRANSPARENT';
       busy = false;
       report('');
       setEnabled();
@@ -671,6 +881,7 @@
   async function importImage(file) {
     if (!file || importing || exporting || !engine) return;
     importing = true;
+    setCompareMode(false);
     clearTimeline();
     invalidate();
     setEnabled();
@@ -687,6 +898,18 @@
       if (editorImage) editorImage.close();
       editorImage = preview;
       source = loaded;
+      const originalThumbnail = $('original-thumbnail'),
+        originalContext = originalThumbnail.getContext('2d'),
+        thumbnailScale = Math.min(64 / preview.width, 64 / preview.height);
+      originalContext.clearRect(0, 0, 64, 64);
+      originalContext.drawImage(
+        preview,
+        (64 - preview.width * thumbnailScale) / 2,
+        (64 - preview.height * thumbnailScale) / 2,
+        preview.width * thumbnailScale,
+        preview.height * thumbnailScale,
+      );
+      originalThumbnail.hidden = false;
       for (const player of Object.values(playback)) player.playing = true;
       states = modeMap(() => fresh());
       history = modeMap(() => []);
@@ -711,10 +934,8 @@
       $('editor-canvas').hidden = false;
       $('empty-import').hidden = true;
       $('replace').hidden = false;
-      $('canvas-instruction').textContent =
-        'Drag to reposition · Scroll slowly or quickly to vary zoom · Guides appear at center';
+      $('canvas-instruction').textContent = 'Drag to move · Scroll to zoom · Arrow keys to nudge';
       $('canvas-title').textContent = modes[mode].label;
-      $('canvas-format').textContent = loaded.animated ? 'ANIMATED SOURCE' : 'PNG · TRANSPARENT';
       syncControls();
       drawEditor();
       toast(
@@ -747,6 +968,9 @@
   });
   let dragDepth = 0;
   const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
+  document.addEventListener('dragstart', (e) => {
+    if (e.target.closest('.compare-pane, .output-list, .chat')) e.preventDefault();
+  });
   document.addEventListener('dragenter', (e) => {
     if (!hasFiles(e)) return;
     e.preventDefault();
@@ -801,8 +1025,11 @@
   ])
     $(id).onclick = () => {
       playback[surface].playing = !playback[surface].playing;
-      applyPlayback(surface);
+      applyPlayback(surface, compareMode && surface === 'editor' && playback[surface].playing);
     };
+  $('compare-toggle').onclick = () => setCompareMode(!compareMode);
+  $('compare-original').onclick = () => setCompareSide('original');
+  $('compare-converted').onclick = () => setCompareSide('converted');
   const trimEdits = new Set();
   for (const key of ['start-frame', 'end-frame']) {
     $(key).addEventListener('input', () => {
@@ -917,6 +1144,100 @@
     handle.addEventListener('pointercancel', finish);
     handle.addEventListener('lostpointercapture', finish);
   }
+  // Dragging the highlighted selection moves both trim boundaries together.
+  {
+    const selection = $('trim-range');
+    const update = (start, preview = false) => {
+      const range = animationRange(),
+        total = source.frameDelays.length,
+        length = range.end - range.start,
+        next = Math.max(0, Math.min(total - length - 1, Math.round(start)));
+      range.start = next;
+      range.end = next + length;
+      clampAnimationRange();
+      syncAnimationControls();
+      schedulePreview();
+      if (preview)
+        for (const surface of Object.keys(playback)) {
+          playback[surface].frameIndex = range.start;
+          renderPlaybackFrame(surface, range.start, stopPlaybackClock(surface));
+        }
+    };
+    selection.addEventListener('keydown', (e) => {
+      const range = animationRange(),
+        total = source?.frameDelays?.length || 2,
+        length = range.end - range.start,
+        jumps = {
+          ArrowLeft: -1,
+          ArrowDown: -1,
+          ArrowRight: 1,
+          ArrowUp: 1,
+          PageDown: -10,
+          PageUp: 10,
+        };
+      let next;
+      if (Object.hasOwn(jumps, e.key)) next = range.start + jumps[e.key];
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = total - length - 1;
+      else return;
+      e.preventDefault();
+      if (!source?.animated || importing || exporting) return;
+      beginEdit();
+      update(next);
+    });
+    selection.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || !source?.animated || importing || exporting || timelineGesture) return;
+      const rect = $('frame-timeline').getBoundingClientRect(),
+        range = animationRange();
+      e.preventDefault();
+      selection.setPointerCapture(e.pointerId);
+      beginEdit();
+      timelineGesture = {
+        pointer: e.pointerId,
+        key: 'range',
+        x: e.clientX,
+        width: rect.width,
+        start: range.start,
+        playing: Object.fromEntries(
+          Object.entries(playback).map(([surface, player]) => [surface, player.playing]),
+        ),
+      };
+      for (const surface of Object.keys(playback)) {
+        playback[surface].playing = false;
+        stopPlaybackClock(surface);
+      }
+    });
+    selection.addEventListener('pointermove', (e) => {
+      const gesture = timelineGesture;
+      if (
+        !gesture ||
+        gesture.pointer !== e.pointerId ||
+        gesture.key !== 'range' ||
+        importing ||
+        exporting
+      )
+        return;
+      const total = source.frameDelays.length,
+        offset = Math.round(((e.clientX - gesture.x) / gesture.width) * total);
+      update(gesture.start + offset, true);
+    });
+    const finish = (e) => {
+      if (
+        !timelineGesture ||
+        timelineGesture.pointer !== e.pointerId ||
+        timelineGesture.key !== 'range'
+      )
+        return;
+      for (const surface of Object.keys(playback))
+        playback[surface].playing = timelineGesture.playing[surface];
+      timelineGesture = null;
+      applyPlayback('editor');
+      applyPlayback('preview');
+    };
+    selection.addEventListener('pointerup', finish);
+    selection.addEventListener('pointercancel', finish);
+    selection.addEventListener('lostpointercapture', finish);
+  }
   $('reset-animation-trim').onclick = () => {
     if (!source?.animated || importing || exporting) return;
     beginEdit();
@@ -934,6 +1255,7 @@
         started = true;
       }
       state()[key] = Number($(key).value);
+      if (key === 'speed') fitAnimationRangeToLimit();
       if ((key === 'width' || key === 'stretch') && state().autoFill)
         state().zoom = fillZoom(state());
       syncControls();

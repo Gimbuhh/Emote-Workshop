@@ -17,7 +17,7 @@ const assert = require('node:assert/strict');
       assert.equal(await versionLink.textContent(), `v${displayVersion}`);
       assert.equal(
         await versionLink.getAttribute('href'),
-        'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md#12---2026-09-20',
+        'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md',
       );
       assert.equal(await versionLink.getAttribute('target'), '_blank');
       assert.equal(await versionLink.getAttribute('rel'), 'noopener noreferrer');
@@ -54,6 +54,60 @@ const assert = require('node:assert/strict');
         buffer: Buffer.from(bytes),
       });
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      assert.match(await page.locator('#original-bytes').textContent(), /^PNG · /);
+      assert.match(await page.locator('#result-bytes').textContent(), /^PNG · /);
+      assert.match(await page.locator('#size-change').textContent(), /smaller|larger|same size/);
+      await page.click('#compare-toggle');
+      assert.equal(await page.locator('#compare-toggle').getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('.original-pane').isVisible(), true);
+      assert.equal(await page.locator('#converted-pane').isVisible(), true);
+      assert.match(await page.locator('#compare-original-meta').textContent(), /^PNG · /);
+      assert.match(await page.locator('#compare-converted-meta').textContent(), /^PNG · /);
+      assert.match(await page.locator('#converted-preview').getAttribute('src'), /^blob:/);
+      assert.equal(await page.locator('#converted-preview').getAttribute('draggable'), 'false');
+      assert.equal(
+        await page.locator('#converted-preview').evaluate((image) => {
+          const event = new DragEvent('dragstart', {
+            bubbles: true,
+            cancelable: true,
+            dataTransfer: new DataTransfer(),
+          });
+          image.dispatchEvent(event);
+          return event.defaultPrevented;
+        }),
+        true,
+      );
+      assert.equal(await page.locator('#original-compare-canvas').isVisible(), true);
+      const originalBefore = await page
+        .locator('#original-compare-canvas')
+        .evaluate((canvas) => canvas.toDataURL());
+      await page.locator('#width-value').fill('270');
+      await page.locator('#width-value').press('Enter');
+      assert.equal(await page.locator('#converted-live-preview').isVisible(), true);
+      assert.equal(await page.locator('#converted-preview').isVisible(), false);
+      assert.equal(
+        await page.locator('#converted-live-preview').evaluate((canvas) => canvas.toDataURL()),
+        await page.locator('#editor-canvas').evaluate((canvas) => canvas.toDataURL()),
+        'Compare mirrors the live transformed canvas while the encoded output catches up',
+      );
+      await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      assert.equal(
+        await page.locator('#original-compare-canvas').evaluate((canvas) => canvas.toDataURL()),
+        originalBefore,
+        'Compare keeps the original source unchanged after framing edits',
+      );
+      await page.locator('#width-value').fill('100');
+      await page.locator('#width-value').press('Enter');
+      await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      await page.setViewportSize({ width: 375, height: 800 });
+      await page.click('#compare-original');
+      assert.equal(await page.locator('.original-pane').isVisible(), true);
+      assert.equal(await page.locator('#converted-pane').isVisible(), false);
+      await page.click('#compare-converted');
+      assert.equal(await page.locator('.original-pane').isVisible(), false);
+      assert.equal(await page.locator('#converted-pane').isVisible(), true);
+      await page.setViewportSize({ width: 1280, height: 720 });
+      await page.click('#compare-toggle');
       const centroid = () =>
         page.locator('#editor-canvas').evaluate((c) => {
           const rgba = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
@@ -182,8 +236,43 @@ const assert = require('node:assert/strict');
       await page.click('#platform-seventv');
       assert.equal(await page.locator('#zoom').inputValue(), '99');
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/animated.avif'));
+      await page.waitForFunction(
+        () =>
+          !document.querySelector('#animation-section').hidden &&
+          document.querySelector('#timeline-frames').getAttribute('aria-busy') === 'false',
+      );
+      await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      await page.click('#compare-toggle');
+      assert.match(await page.locator('#compare-converted-meta').textContent(), /^GIF · /);
+      await page.waitForFunction(
+        () =>
+          !document.querySelector('#original-animated-preview').hidden &&
+          document.querySelector('#original-animated-preview').src.startsWith('blob:'),
+      );
+      await page.click('#editor-animation-toggle');
+      assert.equal(await page.locator('#converted-paused').isVisible(), true);
+      await page.click('#editor-animation-toggle');
+      assert.equal(await page.locator('#converted-preview').isVisible(), true);
+      await page.click('#compare-toggle');
+      await page.locator('#end-frame-value').fill('2');
+      await page.locator('#end-frame-value').press('Enter');
+      assert.equal(await page.locator('#start-frame-value').inputValue(), '1');
+      assert.equal(await page.locator('#end-frame-value').inputValue(), '2');
+      const selection = await page.locator('#trim-range').boundingBox(),
+        timeline = await page.locator('#frame-timeline').boundingBox();
+      assert(selection && timeline);
+      await page.mouse.move(selection.x + selection.width / 2, selection.y + selection.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(
+        selection.x + selection.width / 2 + timeline.width / 3,
+        selection.y + selection.height / 2,
+      );
+      await page.mouse.up();
+      assert.equal(await page.locator('#start-frame-value').inputValue(), '2');
+      assert.equal(await page.locator('#end-frame-value').inputValue(), '3');
       assert.deepEqual(errors, []);
-      console.log(`${file}: rectangular dragging, snapping, and precision wheel zoom OK`);
+      console.log(`${file}: framing, precision wheel zoom, and trim range dragging OK`);
       await page.close();
     }
   } finally {

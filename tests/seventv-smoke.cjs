@@ -20,6 +20,14 @@ const { readFileSync } = require('node:fs');
         ),
         '#7b3fc9',
       );
+      await page.click('#platform-twitch');
+      assert.equal(
+        await page.evaluate(() =>
+          getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+        ),
+        '#9146ff',
+      );
+      await page.click('#platform-seventv');
       const result = await page.evaluate(async () => {
         const engine = new EmoteEngine(),
           state = {
