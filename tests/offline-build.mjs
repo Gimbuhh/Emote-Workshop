@@ -52,6 +52,21 @@ try {
   assert.match(html, /form-action 'none'/);
   assert.equal(run('--check').status, 0);
 
+  const indexPath = path.join(fixture, 'dist/index.html'),
+    index = await readFile(indexPath, 'utf8'),
+    caseMarker = '<ScRiPt>window.__caseMarker = true;</sCrIpT>';
+  await writeFile(indexPath, index.replace('</head>', `${caseMarker}\n</head>`));
+  const mixedCase = run();
+  assert.equal(mixedCase.status, 0, mixedCase.stderr);
+  const mixedCaseHtml = await readFile(output, 'utf8');
+  assert.equal(mixedCaseHtml.split(caseMarker).length - 1, 1);
+  assert.ok(mixedCaseHtml.indexOf(caseMarker) > mixedCaseHtml.indexOf('</main>'));
+  assert.ok(mixedCaseHtml.indexOf(caseMarker) < mixedCaseHtml.indexOf('</body>'));
+  await writeFile(indexPath, index);
+  const restored = run();
+  assert.equal(restored.status, 0, restored.stderr);
+  assert.equal(await readFile(output, 'utf8'), original);
+
   const cssPath = path.join(fixture, 'dist/styles.css'),
     css = await readFile(cssPath, 'utf8');
   await writeFile(
