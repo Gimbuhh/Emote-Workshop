@@ -2,6 +2,35 @@
 
 All notable changes to Emote Workshop are documented here. Per-version notes are preserved under `release-notes/`. Dates below follow the repository's version commits.
 
+## 1.2 - 2026-09-20
+
+### Added
+
+- An optional **Keep canvas filled** framing control dynamically updates Scale when Width or Height changes.
+- A **Compare** mode shows the untouched source beside the actual converted output, with synchronized animation playback and a compact Original/Converted switch on mobile.
+- Original and converted file formats and sizes are shown together, including the percentage saved or added.
+- A labeled GitHub link in the app header opens the Emote Workshop repository.
+
+### Changed
+
+- The editor has a cleaner, denser layout with larger control text, clearer supporting copy, and destination-specific Discord, 7TV, and Twitch accents.
+- Canvas animation playback and chat Preview animation playback now have independent controls and state.
+- A selected animation range can be dragged as a single block with mouse, touch, or keyboard controls.
+- Animation speed changes now adjust the end of Discord and Twitch selections in both directions, trimming when slowed and restoring eligible frames when sped up while respecting the five-second limit.
+- Animated AVIF and GIF conversions retain smoother motion where the file-size limit allows and reduce palette detail before dropping additional frames.
+- Precision-trackpad zoom now uses gentler accumulation for slow movement and proportional multi-step zoom for faster gestures, while conventional wheel input remains one step per notch.
+
+### Fixed
+
+- 7TV output dimensions are now fitted inside a strict sub-3:1 canvas so wide and tall exports meet the service's upload constraint.
+- The version link now opens the main changelog instead of an invalid release-section URL.
+
+### Documentation
+
+- The README now starts with a website-first usage guide, documents the updated editing workflow, and includes a current screenshot of the working editor.
+
+Package version: `1.2.0`; Git tag: `v1.2`. [Release notes](release-notes/1.2.md).
+
 ## 1.1.1 - 2026-09-19
 
 ### Added

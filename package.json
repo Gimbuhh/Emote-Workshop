@@ -1,6 +1,6 @@
 {
   "name": "emote-workshop",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "description": "Offline Twitch, Discord, and 7TV emote editor",
   "engines": {
@@ -13,6 +13,7 @@
     "check:syntax": "node --check dist/app.js && node --check dist/engine.js && node --check build-offline.mjs && node --check serve.mjs && node --check scripts/verify-release.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "docs:screenshot": "node scripts/capture-readme-screenshot.cjs",
     "test:browser": "node tests/browser-smoke.cjs && node tests/seventv-smoke.cjs && node tests/framing-smoke.cjs",
     "test:gif": "node tests/gif-regression.mjs",
     "test:avif": "node tests/avif-regression.mjs",

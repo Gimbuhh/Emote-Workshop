@@ -57,6 +57,15 @@
         </symbol>
         <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></symbol>
         <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></symbol>
+        <symbol id="i-compare" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M12 4v16M8 9l-3 3 3 3m8-6 3 3-3 3" />
+        </symbol>
+        <symbol id="i-github" viewBox="0 0 24 24">
+          <path
+            d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.82a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"
+          />
+        </symbol>
       </defs>
     </svg>
 
@@ -67,38 +76,39 @@
         >
         <a
           class="version-link"
-          href="https://github.com/Gimbuhh/Emote-Workshop/releases/tag/v1.1.1"
+          href="https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Version 1.1.1 — view release on GitHub (opens in a new tab)"
-          >v1.1.1</a
+          aria-label="Version 1.2 — view changelog on GitHub (opens in a new tab)"
+          >v1.2</a
         >
       </div>
       <div class="header-actions">
+        <a
+          class="repo-link"
+          href="https://github.com/Gimbuhh/Emote-Workshop"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Emote Workshop on GitHub (opens in a new tab)"
+          ><svg aria-hidden="true"><use href="#i-github" /></svg><span>GitHub</span></a
+        >
         <span class="offline"
           ><svg><use href="#i-lock" /></svg>Processed on this device</span
         >
         <button id="sample" class="button quiet" disabled>Try sample</button>
-        <button class="button primary" id="import-top">
-          <svg><use href="#i-upload" /></svg>Import media
+        <button class="button primary" id="import-top" aria-label="Import media">
+          <svg><use href="#i-upload" /></svg><span>Import media</span>
         </button>
       </div>
     </header>
 
     <main>
-      <div class="workspace-heading">
-        <div>
-          <p class="eyebrow">LOCAL EMOTE EDITOR</p>
-          <h1>Prepare emotes for Twitch, Discord and 7TV</h1>
-        </div>
-      </div>
       <div id="message" class="message" role="status" aria-live="polite" hidden></div>
       <div class="workspace">
         <aside class="settings panel" aria-label="Image settings">
           <section class="setting-section destination-section">
             <div class="section-title">
               <h2>Destination</h2>
-              <span class="step">01</span>
             </div>
             <div class="segmented" aria-label="Platform">
               <button id="platform-discord" aria-pressed="true">Discord</button
@@ -117,7 +127,6 @@
           <section class="setting-section">
             <div class="section-title">
               <h2>Framing</h2>
-              <span class="step">02</span>
             </div>
             <fieldset id="framing" disabled>
               <button id="center" class="button center-button">
@@ -191,7 +200,7 @@
                 value="100"
                 aria-describedby="width-hint"
               />
-              <p id="width-hint" class="muted stretch-hint">Stretch wider · 100% is natural.</p>
+              <span id="width-hint" hidden>100% keeps the original width.</span>
               <div class="control-label">
                 <label for="stretch">Height</label>
                 <span class="value-controls">
@@ -228,7 +237,19 @@
                 value="100"
                 aria-describedby="stretch-hint"
               />
-              <p id="stretch-hint" class="muted stretch-hint">Stretch taller · 100% is natural.</p>
+              <span id="stretch-hint" hidden>100% keeps the original height.</span>
+              <button
+                id="auto-fill"
+                class="toggle-control"
+                type="button"
+                role="switch"
+                aria-pressed="false"
+              >
+                <span
+                  ><strong>Keep canvas filled</strong
+                  ><small>Adjust Scale as you change Width or Height.</small></span
+                ><span class="toggle-track" aria-hidden="true"><span></span></span>
+              </button>
               <button
                 id="trim"
                 class="toggle-control"
@@ -281,8 +302,7 @@
 
           <section class="setting-section">
             <div class="section-title">
-              <h2>Finish</h2>
-              <span id="finish-step" class="step">03</span>
+              <h2>Appearance</h2>
             </div>
             <fieldset id="finish" disabled>
               <div class="control-label">
@@ -347,10 +367,6 @@
               <input type="range" id="brightness" min="50" max="150" step="1" value="100" />
             </fieldset>
           </section>
-          <div class="settings-note">
-            <svg><use href="#i-lock" /></svg>
-            <p>Files remain local.<span>No uploads or network requests.</span></p>
-          </div>
         </aside>
 
         <section class="editor panel" aria-labelledby="canvas-title">
@@ -360,6 +376,15 @@
               <h2 id="canvas-title">Canvas</h2>
             </div>
             <div class="history">
+              <button
+                id="compare-toggle"
+                class="playback-button compare-toggle"
+                aria-label="Compare original and converted output"
+                aria-pressed="false"
+                disabled
+              >
+                <svg><use href="#i-compare" /></svg><span>Compare</span>
+              </button>
               <button
                 id="editor-animation-toggle"
                 class="playback-button editor-playback"
@@ -387,31 +412,76 @@
               </button>
             </div>
           </div>
-          <div id="drop-zone" class="stage" aria-busy="false">
-            <div class="canvas-wrap">
-              <canvas
-                id="editor-canvas"
-                width="800"
-                height="800"
-                tabindex="0"
-                aria-label="Image framing canvas. Scroll to zoom by 1%. Drag to reposition, or use arrow keys. Hold Shift for larger steps."
-                hidden
-              ></canvas>
-              <img
-                id="animated-canvas-preview"
-                class="animated-canvas-preview"
-                alt="Animated canvas preview"
-                hidden
-              />
-              <div id="alignment-guides" class="alignment-guides" aria-hidden="true">
-                <span class="guide vertical"></span><span class="guide horizontal"></span>
+          <div id="drop-zone" class="stage" aria-busy="false" data-compare-side="converted">
+            <div class="compare-shell">
+              <div class="compare-mobile-switch" aria-label="Comparison view">
+                <button id="compare-original" aria-pressed="false">Original</button>
+                <button id="compare-converted" aria-pressed="true">Converted</button>
               </div>
-              <button id="empty-import" class="empty-import">
-                <span class="import-glyph"
-                  ><svg><use href="#i-image" /></svg><span>+</span></span
-                ><strong>Import media</strong><span>Drop, paste, or click to browse</span
-                ><small>PNG, JPG, GIF, WebP, AVIF, or MP4 · Up to 100 MB</small>
-              </button>
+              <div class="compare-grid">
+                <figure class="compare-pane original-pane">
+                  <figcaption>
+                    <strong>Original</strong><span id="compare-original-meta">Source preview</span>
+                  </figcaption>
+                  <div id="editor-wrap" class="canvas-wrap">
+                    <canvas
+                      id="editor-canvas"
+                      width="800"
+                      height="800"
+                      tabindex="0"
+                      aria-label="Image framing canvas. Scroll slowly for precise zoom or quickly for larger changes. Drag to reposition, or use arrow keys. Hold Shift for larger steps."
+                      hidden
+                    ></canvas>
+                    <canvas
+                      id="original-compare-canvas"
+                      class="original-compare-preview"
+                      aria-label="Untouched original image"
+                      hidden
+                    ></canvas>
+                    <img
+                      id="original-animated-preview"
+                      class="original-compare-preview"
+                      alt="Untouched animated original"
+                      draggable="false"
+                      hidden
+                    />
+                    <img
+                      id="animated-canvas-preview"
+                      class="animated-canvas-preview"
+                      alt="Animated original preview"
+                      draggable="false"
+                      hidden
+                    />
+                    <div id="alignment-guides" class="alignment-guides" aria-hidden="true">
+                      <span class="guide vertical"></span><span class="guide horizontal"></span>
+                    </div>
+                    <button id="empty-import" class="empty-import">
+                      <span class="import-glyph"
+                        ><svg><use href="#i-image" /></svg><span>+</span></span
+                      ><strong>Import media</strong><span>Drop, paste, or click to browse</span
+                      ><small>PNG, JPG, GIF, WebP, AVIF, or MP4 · Up to 100 MB</small>
+                    </button>
+                  </div>
+                </figure>
+                <figure id="converted-pane" class="compare-pane converted-pane" hidden>
+                  <figcaption>
+                    <strong>Converted</strong><span id="compare-converted-meta">Preparing…</span>
+                  </figcaption>
+                  <div id="converted-wrap" class="converted-wrap">
+                    <img id="converted-preview" alt="Converted export preview" draggable="false" />
+                    <canvas
+                      id="converted-paused"
+                      aria-label="Paused converted export"
+                      hidden
+                    ></canvas>
+                    <canvas
+                      id="converted-live-preview"
+                      aria-label="Live transformed preview"
+                      hidden
+                    ></canvas>
+                  </div>
+                </figure>
+              </div>
             </div>
             <div id="loading" class="loading" hidden>
               <span class="spinner"></span><span id="loading-label">Opening media…</span>
@@ -420,8 +490,27 @@
           <div class="canvas-caption">
             <span id="canvas-instruction"
               >Drag, drop, paste, or import a file. Scroll over the canvas to zoom.</span
-            ><span id="canvas-format">PNG / GIF / WEBP / AVIF / MP4</span>
+            >
           </div>
+          <section class="size-comparison" aria-label="Original and export file sizes">
+            <div class="comparison-item">
+              <canvas
+                id="original-thumbnail"
+                width="64"
+                height="64"
+                aria-label="Original artwork"
+                hidden
+              ></canvas>
+              <div><span>Original file</span><strong id="original-bytes">—</strong></div>
+            </div>
+            <span class="comparison-arrow" aria-hidden="true">→</span>
+            <div class="comparison-item">
+              <div>
+                <span id="result-size-label">Export</span><strong id="result-bytes">—</strong>
+              </div>
+            </div>
+            <p id="size-change" role="status">Import a file to compare sizes.</p>
+          </section>
           <section id="animation-section" class="setting-section" hidden>
             <div class="section-title"><h2>Animation</h2></div>
             <fieldset id="animation-trim">
@@ -471,7 +560,18 @@
                 <div id="timeline-frames" class="timeline-frames" aria-hidden="true"></div>
                 <div class="timeline-shade before"></div>
                 <div class="timeline-shade after"></div>
-                <div class="timeline-selection" aria-hidden="true"></div>
+                <button
+                  id="trim-range"
+                  type="button"
+                  class="timeline-selection"
+                  role="slider"
+                  aria-label="Move selected frames"
+                  aria-valuemin="1"
+                  aria-valuemax="1"
+                  aria-valuenow="1"
+                  aria-controls="start-frame-value end-frame-value"
+                  aria-describedby="timeline-status"
+                ></button>
                 <button
                   id="trim-start-handle"
                   type="button"
@@ -500,7 +600,8 @@
                 </button>
               </div>
               <p id="timeline-status" class="muted stretch-hint">
-                Drag the handles to trim. Arrow keys adjust one frame.
+                Drag the selection to move it; drag the handles to resize. Arrow keys adjust one
+                frame.
               </p>
               <div class="control-label">
                 <label for="start-frame">Start frame</label>
@@ -570,16 +671,12 @@
             </div>
             <button class="button quiet small" id="replace" hidden>Replace</button>
           </div>
-          <div class="editor-footer">
-            <span>SHORTCUTS</span>
-            <p>Paste from the clipboard · Drag files anywhere · Arrow keys nudge the image</p>
-          </div>
         </section>
 
         <aside class="result-column" aria-label="Preview and export">
           <section class="preview panel">
             <div class="panel-heading">
-              <h2>Preview</h2>
+              <h2>In chat</h2>
               <div class="preview-controls">
                 <button id="animation-toggle" class="playback-button" aria-pressed="true" hidden>
                   <svg><use href="#i-pause" /></svg><span>Pause</span>
@@ -600,7 +697,12 @@
               <div class="chat-messages">
                 <p>
                   <b class="user-one">mochi</b><span id="chat-line-one">this is the one</span>
-                  <img class="emote-preview inline-emote" alt="Your emote in a message" hidden />
+                  <img
+                    class="emote-preview inline-emote"
+                    alt="Your emote in a message"
+                    draggable="false"
+                    hidden
+                  />
                 </p>
                 <p><b class="user-two">pixelpal</b> <span>okay, I love it</span></p>
                 <div class="feature-message">
@@ -608,17 +710,30 @@
                   <div class="feature-content">
                     <b class="user-you">you<span>Today at 12:34</span></b>
                     <div class="emote-run">
-                      <img class="emote-preview main-emote" alt="Your emote in chat" hidden /><img
+                      <img
+                        class="emote-preview main-emote"
+                        alt="Your emote in chat"
+                        draggable="false"
+                        hidden
+                      /><img
                         class="emote-preview repeat-emote"
                         alt=""
+                        draggable="false"
                         hidden
-                      /><img class="emote-preview repeat-emote" alt="" hidden /><span
-                        id="preview-placeholder"
-                        >Export preview</span
-                      >
+                      /><img
+                        class="emote-preview repeat-emote"
+                        alt=""
+                        draggable="false"
+                        hidden
+                      /><span id="preview-placeholder">Export preview</span>
                     </div>
                     <span id="reaction" class="reaction" hidden
-                      ><img class="emote-preview" alt="Your emoji as a reaction" /> 3</span
+                      ><img
+                        class="emote-preview"
+                        alt="Your emoji as a reaction"
+                        draggable="false"
+                      />
+                      3</span
                     >
                   </div>
                 </div>
@@ -626,14 +741,12 @@
               <div class="chat-input" id="chat-input">Send a message <span>☺</span></div>
             </div>
             <div class="preview-note">
-              <span class="check-mark">✓</span
-              ><span id="preview-caption">Actual-size preview · dark background</span>
+              <span id="preview-caption">Actual-size preview · dark background</span>
             </div>
           </section>
           <section class="export panel">
             <div class="section-title">
               <h2>Export</h2>
-              <span id="export-step" class="step">04</span>
             </div>
             <label for="emote-name">File name</label
             ><input
@@ -645,12 +758,9 @@
               autocomplete="off"
             />
             <div class="output-heading">
-              <span>FILES</span><span id="export-status" role="status">Waiting for an image</span>
+              <span>Files</span><span id="export-status" role="status">Waiting for an image</span>
             </div>
             <div id="output-list" class="output-list"></div>
-            <p id="export-note" class="export-note">
-              Dimensions and file size are checked before download.
-            </p>
             <button id="export-current" class="button primary export-button" disabled>
               <svg><use href="#i-download" /></svg><span id="export-label">Export emoji</span>
             </button>
@@ -660,10 +770,6 @@
           </section>
         </aside>
       </div>
-      <footer class="app-footer">
-        <span>Offline image processing</span
-        ><span>Twitch emotes · Discord emoji · Discord stickers · 7TV emotes</span>
-      </footer>
     </main>
     <input
       id="file-input"

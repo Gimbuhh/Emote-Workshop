@@ -51,7 +51,7 @@ function imageWorker() {
     animated = false;
   const MAX_BYTES = 100 * 1024 * 1024,
     MAX_PIXELS = 48 * 1000 * 1000,
-    MAX_SOURCE_FRAMES = 120,
+    MAX_SOURCE_FRAMES = 240,
     MAX_VIDEO_FRAMES = 240,
     MAX_VIDEO_PIXELS = 64 * 1024 * 1024,
     MAX_RENDER_PIXELS = 32 * 1024 * 1024;
@@ -95,6 +95,12 @@ function imageWorker() {
       throw new Error(
         'This image exceeds the 48-megapixel / 20,000-pixel-side limit. Reduce its dimensions and try again.',
       );
+  }
+  function sourceFrameStride(count, width, height) {
+    const pixels = Math.max(1, width * height),
+      pixelBudgetFrames = Math.max(2, Math.floor(MAX_RENDER_PIXELS / pixels)),
+      frameLimit = Math.min(MAX_SOURCE_FRAMES, pixelBudgetFrames);
+    return Math.max(1, Math.ceil(count / frameLimit));
   }
 
   function inspectAvif(bytes) {
@@ -259,7 +265,9 @@ function imageWorker() {
       await decoder.tracks.ready;
       await decoder.completed;
       const count = Math.max(1, decoder.tracks.selectedTrack?.frameCount || 1),
-        stride = Math.max(1, Math.ceil(count / MAX_SOURCE_FRAMES)),
+        workingWidth = options.desiredWidth || details.width,
+        workingHeight = options.desiredHeight || details.height,
+        stride = sourceFrameStride(count, workingWidth, workingHeight),
         frameDelays = [];
       for (let index = 0; index < count; index += stride) {
         const result = await decoder.decode({ frameIndex: index, completeFramesOnly: true }),
@@ -869,7 +877,7 @@ function imageWorker() {
     }
     return { ...plan, rgba };
   }
-  async function previewFrame(index, state, size, height = size) {
+  async function previewFrame(index, state, size, height = size, includeSource = false) {
     if (!frames.length) throw new Error('Import media first.');
     checkState(state);
     if (
@@ -885,7 +893,22 @@ function imageWorker() {
       canvas = makeCanvas(size, height),
       ctx = canvas.getContext('2d');
     drawArtwork(ctx, frames[frameIndex], state, size, bounds, makeCanvas, height);
-    return { index: frameIndex, blob: await canvas.convertToBlob({ type: 'image/png' }) };
+    const result = {
+      index: frameIndex,
+      blob: await canvas.convertToBlob({ type: 'image/png' }),
+    };
+    if (includeSource) {
+      const frame = frames[frameIndex],
+        ratio = Math.min(1, 800 / Math.max(frame.width, frame.height)),
+        sourceWidth = Math.max(1, Math.round(frame.width * ratio)),
+        sourceHeight = Math.max(1, Math.round(frame.height * ratio)),
+        sourceCanvas = makeCanvas(sourceWidth, sourceHeight);
+      sourceCanvas.getContext('2d').drawImage(frame, 0, 0, sourceWidth, sourceHeight);
+      result.sourceBlob = await sourceCanvas.convertToBlob({ type: 'image/png' });
+      result.sourceWidth = sourceWidth;
+      result.sourceHeight = sourceHeight;
+    }
+    return result;
   }
   async function renderAnimated(size, state, preset, mode, range, height = size) {
     const rendered = renderFrames(size, state, preset, range, height),
@@ -903,7 +926,7 @@ function imageWorker() {
               { step: 6, q: 32 },
             ]
           : [1, 1.25, 1.5, 2, 3, 4, 6, 8].flatMap((step) =>
-              [256, 128, 64, 32].filter((p) => step >= 4 || p >= 64).map((p) => ({ step, p })),
+              [256, 128, 64, 32, 16].map((p) => ({ step, p })),
             );
     posterContext.putImageData(new ImageData(rendered.rgba[0], size, height), 0, 0);
     const poster = await posterCanvas.convertToBlob({ type: 'image/png' });
@@ -950,6 +973,13 @@ function imageWorker() {
       'This animation cannot fit the destination file-size limit. Shorten it or simplify the artwork.',
     );
   }
+  function limitAspectRatio(width, height) {
+    const roundedWidth = Math.max(1, Math.round(width)),
+      roundedHeight = Math.max(1, Math.round(height));
+    if (roundedWidth >= roundedHeight * 3) return [roundedHeight * 3 - 1, roundedHeight];
+    if (roundedHeight >= roundedWidth * 3) return [roundedWidth, roundedWidth * 3 - 1];
+    return [roundedWidth, roundedHeight];
+  }
   async function render(mode, state, range) {
     if (!frames.length) throw new Error('Import media first.');
     const preset = presets[mode];
@@ -963,7 +993,7 @@ function imageWorker() {
       ratio = Math.min(1, 1000 / Math.max(source.w, source.h)),
       dimensions =
         mode === 'seventv'
-          ? [[Math.max(1, Math.round(source.w * ratio)), Math.max(1, Math.round(source.h * ratio))]]
+          ? [limitAspectRatio(source.w * ratio, source.h * ratio)]
           : preset.sizes.map((size) => [size, size]);
     const outputs = [];
     for (const [size, height] of dimensions) {
@@ -1016,7 +1046,13 @@ function imageWorker() {
         else if (data.action === 'loadVideo')
           result = await loadVideo(data.videoFrames, data.frameDelays, data.details);
         else if (data.action === 'previewFrame')
-          result = await previewFrame(data.index, data.state, data.size, data.height);
+          result = await previewFrame(
+            data.index,
+            data.state,
+            data.size,
+            data.height,
+            data.includeSource,
+          );
         else if (data.action === 'render') result = await render(data.mode, data.state, data.range);
         else if (data.action === 'all') {
           result = {};
