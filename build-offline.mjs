@@ -37,9 +37,9 @@ for (const file of ['vendor/jszip.min.js', 'sample.js', 'engine.js', 'app.js']) 
   html = html.replace(`<script src="${file}" defer></script>`, () => `<script>${code}</script>`);
 }
 // Inline scripts execute after the interface exists, in their dependency order.
-const scripts = [...html.matchAll(/<script>[\s\S]*?<\/script>/g)].map((m) => m[0]);
+const scripts = [...html.matchAll(/<script>[\s\S]*?<\/script>/gi)].map((m) => m[0]);
 html = html
-  .replace(/\s*<script>[\s\S]*?<\/script>/g, '')
+  .replace(/\s*<script>[\s\S]*?<\/script>/gi, '')
   .replace('</body>', () => `${scripts.join('\n')}\n</body>`);
 const css = (await verifiedInput('styles.css', 'utf8')).replace(/\r\n?/g, '\n');
 if (/<\/style/gi.test(css)) {
