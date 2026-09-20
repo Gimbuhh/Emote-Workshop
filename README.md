@@ -1,6 +1,19 @@
 # Emote Workshop
 
-A self-contained, offline emote editor for Twitch, Discord, and 7TV. Open **Emote Workshop.html** in Chrome or Edge — no install, account, or internet connection required.
+A private, browser-based emote editor for Twitch, Discord, and 7TV.
+
+## How to use
+
+1. **[Open Emote Workshop](https://emotes.gimba.uk)** in Chrome or Edge.
+2. Import an image, animation, or MP4 — or choose **Try sample**.
+3. Select Twitch, Discord, or 7TV and adjust the framing while checking the live previews.
+4. Enter a file name and export the current destination or every destination at once.
+
+Everything is processed on your device; no account or upload is required. For a fully offline copy, download and open **Emote Workshop.html** in Chrome or Edge.
+
+![Emote Workshop editing an emote for 7TV](docs/images/emote-workshop.png)
+
+## What it makes
 
 Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), pick a destination, adjust framing, and export:
 

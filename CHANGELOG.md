@@ -2,6 +2,28 @@
 
 All notable changes to Emote Workshop are documented here. Per-version notes are preserved under `release-notes/`. Dates below follow the repository's version commits.
 
+## 1.2 - 2026-09-20
+
+### Added
+
+- An optional **Keep canvas filled** framing control dynamically updates Scale when Width or Height changes.
+- A labeled GitHub link in the app header opens the Emote Workshop repository.
+
+### Changed
+
+- Canvas animation playback and chat Preview animation playback now have independent controls and state.
+- Precision-trackpad zoom now uses gentler accumulation for slow movement and proportional multi-step zoom for faster gestures, while conventional wheel input remains one step per notch.
+
+### Fixed
+
+- 7TV output dimensions are now fitted inside a strict sub-3:1 canvas so wide and tall exports meet the service's upload constraint.
+
+### Documentation
+
+- The README now starts with a website-first usage guide and a screenshot of the working editor.
+
+Package version: `1.2.0`; Git tag: `v1.2`. [Release notes](release-notes/1.2.md).
+
 ## 1.1.1 - 2026-09-19
 
 ### Added

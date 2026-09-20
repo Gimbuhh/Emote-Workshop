@@ -57,6 +57,11 @@
         </symbol>
         <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></symbol>
         <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></symbol>
+        <symbol id="i-github" viewBox="0 0 24 24">
+          <path
+            d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.82a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"
+          />
+        </symbol>
       </defs>
     </svg>
 
@@ -67,14 +72,22 @@
         >
         <a
           class="version-link"
-          href="https://github.com/Gimbuhh/Emote-Workshop/releases/tag/v1.1.1"
+          href="https://github.com/Gimbuhh/Emote-Workshop/releases/tag/v1.2"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Version 1.1.1 — view release on GitHub (opens in a new tab)"
-          >v1.1.1</a
+          aria-label="Version 1.2 — view release on GitHub (opens in a new tab)"
+          >v1.2</a
         >
       </div>
       <div class="header-actions">
+        <a
+          class="repo-link"
+          href="https://github.com/Gimbuhh/Emote-Workshop"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Emote Workshop on GitHub (opens in a new tab)"
+          ><svg aria-hidden="true"><use href="#i-github" /></svg><span>GitHub</span></a
+        >
         <span class="offline"
           ><svg><use href="#i-lock" /></svg>Processed on this device</span
         >
@@ -229,6 +242,18 @@
                 aria-describedby="stretch-hint"
               />
               <p id="stretch-hint" class="muted stretch-hint">Stretch taller · 100% is natural.</p>
+              <button
+                id="auto-fill"
+                class="toggle-control"
+                type="button"
+                role="switch"
+                aria-pressed="false"
+              >
+                <span
+                  ><strong>Keep canvas filled</strong
+                  ><small>Update Scale automatically when Width or Height changes.</small></span
+                ><span class="toggle-track" aria-hidden="true"><span></span></span>
+              </button>
               <button
                 id="trim"
                 class="toggle-control"
@@ -394,7 +419,7 @@
                 width="800"
                 height="800"
                 tabindex="0"
-                aria-label="Image framing canvas. Scroll to zoom by 1%. Drag to reposition, or use arrow keys. Hold Shift for larger steps."
+                aria-label="Image framing canvas. Scroll slowly for precise zoom or quickly for larger changes. Drag to reposition, or use arrow keys. Hold Shift for larger steps."
                 hidden
               ></canvas>
               <img

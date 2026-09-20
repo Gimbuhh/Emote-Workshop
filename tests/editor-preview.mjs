@@ -35,7 +35,11 @@ const context = {
   makeCanvas() {},
   drawArtwork() {},
   $: (id) => (id === 'editor-canvas' ? canvas : editor),
-  document: { querySelector: () => wrap, querySelectorAll: () => [editor, chat, thumbnail] },
+  document: {
+    querySelector: () => wrap,
+    querySelectorAll: (selector) =>
+      selector.includes(':not') ? [chat, thumbnail] : [editor, chat, thumbnail],
+  },
   URL: {
     createObjectURL(blob) {
       created.push(blob);
@@ -45,12 +49,11 @@ const context = {
       revoked.push(url);
     },
   },
-  playbackFrameURL: '',
-  editorPlaybackFrameURL: '',
-  playbackFrameIndex: 0,
+  playback: {
+    editor: { playing: true, timer: 0, revision: 7, frameIndex: 0, frameURL: '' },
+    preview: { playing: true, timer: 0, revision: 7, frameIndex: 0, frameURL: '' },
+  },
   previewRevision: 0,
-  playbackRevision: 7,
-  animationPlaying: true,
   animationRange: () => ({ start: 0, end: 1 }),
   setTimeout(fn, delay) {
     timers.push({ fn, delay });
@@ -71,9 +74,9 @@ const context = {
 vm.createContext(context);
 vm.runInContext(
   [
-    section('  function editorSize()', '  function stopPlaybackClock()'),
+    section('  function editorSize()', '  function stopPlaybackClock('),
     section('  const playbackDelay =', '  const rangeDuration ='),
-    section('  function clearPlaybackFrame()', '  function cleanURLs()'),
+    section('  function stopPlaybackClock(', '  function cleanURLs()'),
     section('  function displayPlaybackFrame(', '  function startPlayback('),
   ].join('\n'),
   context,
@@ -92,7 +95,8 @@ for (const [mode, width, height, outputWidth, outputHeight] of [
   assert.deepEqual([canvas.width, canvas.height], [width, height]);
   assert.equal(wrap.style.aspectRatio, `${width} / ${height}`);
   requests.length = 0;
-  await context.renderPlaybackFrame(1, 7);
+  await context.renderPlaybackFrame('preview', 1, 7);
+  await context.renderPlaybackFrame('editor', 1, 7);
   assert.deepEqual(
     requests.map(({ size, height }) => [size, height]),
     [
@@ -104,8 +108,8 @@ for (const [mode, width, height, outputWidth, outputHeight] of [
     requests.every(({ index }) => index === 1),
     'Editor/chat show the same frame',
   );
-  assert.equal(editor.src, context.editorPlaybackFrameURL);
-  assert.equal(chat.src, context.playbackFrameURL);
+  assert.equal(editor.src, context.playback.editor.frameURL);
+  assert.equal(chat.src, context.playback.preview.frameURL);
   assert.equal(thumbnail.src, chat.src);
   assert.notEqual(editor.src, chat.src);
   assert.equal(editor.hidden, false);
@@ -113,28 +117,28 @@ for (const [mode, width, height, outputWidth, outputHeight] of [
 assert(revoked.length >= 8, 'Superseded editor and destination URLs are released');
 const timerCount = timers.length;
 context.state = () => ({ zoom: 90, speed: 50 });
-await context.renderPlaybackFrame(0, 7);
+await context.renderPlaybackFrame('preview', 0, 7);
 assert.equal(timers.at(-1).delay, 160, 'Half speed doubles preview delays');
 context.state = () => ({ zoom: 90, speed: 150 });
-await context.renderPlaybackFrame(0, 7);
+await context.renderPlaybackFrame('preview', 0, 7);
 assert.equal(timers.at(-1).delay, 80 / 1.5, 'Fast preview timing follows speed');
 context.state = () => ({ zoom: 90 });
-context.animationPlaying = false;
-await context.renderPlaybackFrame(0, 7);
+context.playback.preview.playing = false;
+await context.renderPlaybackFrame('preview', 0, 7);
 assert.equal(
   timers.length,
   timerCount + 2,
   'A paused first frame renders without starting playback',
 );
-assert.equal(editor.dataset.frameIndex, '0');
+assert.equal(chat.dataset.frameIndex, '0');
 const urlCount = created.length;
-await context.renderPlaybackFrame(1, 6);
+await context.renderPlaybackFrame('preview', 1, 6);
 assert.equal(created.length, urlCount, 'Stale playback results are discarded');
-const lastURLs = [context.playbackFrameURL, context.editorPlaybackFrameURL];
-context.clearPlaybackFrame();
+const lastURLs = [context.playback.preview.frameURL, context.playback.editor.frameURL];
+context.clearPlaybackFrames();
 assert(lastURLs.every((url) => revoked.includes(url)));
-assert.equal(context.playbackFrameURL, '');
-assert.equal(context.editorPlaybackFrameURL, '');
+assert.equal(context.playback.preview.frameURL, '');
+assert.equal(context.playback.editor.frameURL, '');
 console.log(
   'Consistent still/animated editor resolution, destination previews, pause, and URL cleanup OK',
 );

@@ -40,6 +40,7 @@ const { readFileSync } = require('node:fs');
             [2031, 1000],
             [1406, 1000],
             [260, 128],
+            [504, 128],
             [64, 128],
           ]) {
             const c = document.createElement('canvas');
@@ -220,6 +221,7 @@ const { readFileSync } = require('node:fs');
           [1000, 492],
           [1000, 711],
           [260, 128],
+          [383, 128],
           [64, 128],
         ],
       );
@@ -227,7 +229,9 @@ const { readFileSync } = require('node:fs');
         assert.deepEqual(f.decoded, [f.width, f.height]);
         assert.equal(f.limit, 7000000);
         assert(f.bytes <= f.limit);
+        assert(Math.max(f.width / f.height, f.height / f.width) < 3);
       }
+      assert.deepEqual(result.fixtures.at(-2).decoded, [383, 128]);
       assert.deepEqual(result.keys, ['twitch', 'emoji', 'sticker', 'seventv']);
       assert.deepEqual(
         result.twitchStatic.map((output) => output.size),
@@ -276,8 +280,28 @@ const { readFileSync } = require('node:fs');
       }));
       assert.equal(inline.height, 32);
       assert.equal(inline.width, 65);
+      assert.equal(
+        await page.locator('#editor-animation-toggle').getAttribute('aria-pressed'),
+        'true',
+      );
       await page.click('#animation-toggle');
       assert.equal(await page.locator('#animation-toggle').getAttribute('aria-pressed'), 'false');
+      assert.equal(
+        await page.locator('#editor-animation-toggle').getAttribute('aria-pressed'),
+        'true',
+      );
+      await page.click('#editor-animation-toggle');
+      assert.equal(
+        await page.locator('#editor-animation-toggle').getAttribute('aria-pressed'),
+        'false',
+      );
+      assert.equal(await page.locator('#animation-toggle').getAttribute('aria-pressed'), 'false');
+      await page.click('#animation-toggle');
+      assert.equal(await page.locator('#animation-toggle').getAttribute('aria-pressed'), 'true');
+      assert.equal(
+        await page.locator('#editor-animation-toggle').getAttribute('aria-pressed'),
+        'false',
+      );
       await page.click('#platform-twitch');
       assert.equal(await page.locator('#end-frame').inputValue(), '8');
       await page.evaluate(() => {

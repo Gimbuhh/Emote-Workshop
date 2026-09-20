@@ -157,6 +157,33 @@ button svg {
   align-items: center;
   gap: 10px;
 }
+.repo-link {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #bdc1ca;
+  font-size: 12px;
+  font-weight: 600;
+}
+.repo-link:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: #fff;
+}
+.repo-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.repo-link svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+  stroke: none;
+}
 .offline {
   display: flex;
   align-items: center;
@@ -1509,6 +1536,14 @@ input[type='color'] {
     height: 39px;
   }
   .offline {
+    display: none;
+  }
+  .repo-link {
+    width: 34px;
+    padding: 7px;
+    justify-content: center;
+  }
+  .repo-link span {
     display: none;
   }
   .header-actions {

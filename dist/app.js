@@ -20,7 +20,7 @@
     },
     seventv: {
       label: '7TV emote',
-      hint: 'One upload, up to 1000 × 1000 · 7 MB. 7TV generates the 1×–4× sizes, preserves wide emotes, and may sample long animations.',
+      hint: 'One upload, up to 1000 × 1000 · 7 MB. Exports stay below 7TV’s 3:1 aspect-ratio limit; 7TV generates the 1×–4× sizes and may sample long animations.',
       sizes: [1000],
       limit: '7 MB max',
       export: 'Export 7TV emote',
@@ -46,6 +46,7 @@
     rotation: 0,
     flip: false,
     trim: false,
+    autoFill: false,
     outline: 0,
     color: '#ffffff',
     brightness: 100,
@@ -70,13 +71,11 @@
     dragGesture = null,
     colorGesture = false,
     toastTimer;
-  let animationRanges = modeMap(() => ({ start: 0, end: 1 })),
-    animationPlaying = true,
-    playbackTimer = 0,
-    playbackRevision = 0,
-    playbackFrameIndex = 0,
-    playbackFrameURL = '',
-    editorPlaybackFrameURL = '';
+  let animationRanges = modeMap(() => ({ start: 0, end: 1 }));
+  const playback = {
+    editor: { playing: true, timer: 0, revision: 0, frameIndex: 0, frameURL: '' },
+    preview: { playing: true, timer: 0, revision: 0, frameIndex: 0, frameURL: '' },
+  };
   let timelineRevision = 0,
     timelineURLs = [],
     timelineGesture = null;
@@ -195,11 +194,21 @@
     $('outline-color').value = s.color;
     $('flip').setAttribute('aria-pressed', String(s.flip));
     $('trim').setAttribute('aria-pressed', String(s.trim));
+    $('auto-fill').setAttribute('aria-pressed', String(s.autoFill));
     $('trim-label').textContent =
       mode === 'seventv' ? 'Trim transparent space' : 'Ignore transparent margins';
     syncFramingHints();
     if (source?.animated) syncAnimationControls();
     syncHistory();
+  }
+  function limitAspectRatio(width, height) {
+    const roundedWidth = Math.max(1, Math.round(width)),
+      roundedHeight = Math.max(1, Math.round(height));
+    if (roundedWidth >= roundedHeight * 3)
+      return { width: roundedHeight * 3 - 1, height: roundedHeight };
+    if (roundedHeight >= roundedWidth * 3)
+      return { width: roundedWidth, height: roundedWidth * 3 - 1 };
+    return { width: roundedWidth, height: roundedHeight };
   }
   function uploadSize() {
     const w = source?.workingWidth || source?.width || 1000,
@@ -214,10 +223,7 @@
       stretchedWidth = b.w * ((state().width ?? 100) / 100),
       stretchedHeight = b.h * ((state().stretch ?? 100) / 100),
       ratio = Math.min(1, 1000 / Math.max(stretchedWidth, stretchedHeight));
-    return {
-      width: Math.max(1, Math.round(stretchedWidth * ratio)),
-      height: Math.max(1, Math.round(stretchedHeight * ratio)),
-    };
+    return limitAspectRatio(stretchedWidth * ratio, stretchedHeight * ratio);
   }
   function editorSize() {
     const d = mode === 'seventv' ? uploadSize() : { width: 1, height: 1 },
@@ -244,21 +250,27 @@
         c.height,
       );
   }
-  function stopPlaybackClock() {
-    clearTimeout(playbackTimer);
-    playbackTimer = 0;
-    return ++playbackRevision;
+  function stopPlaybackClock(surface) {
+    const player = playback[surface];
+    clearTimeout(player.timer);
+    player.timer = 0;
+    return ++player.revision;
   }
-  function clearPlaybackFrame() {
-    if (playbackFrameURL) URL.revokeObjectURL(playbackFrameURL);
-    if (editorPlaybackFrameURL) URL.revokeObjectURL(editorPlaybackFrameURL);
-    playbackFrameURL = '';
-    editorPlaybackFrameURL = '';
-    playbackFrameIndex = animationRange().start;
+  function stopPlaybackClocks() {
+    for (const surface of Object.keys(playback)) stopPlaybackClock(surface);
+  }
+  function clearPlaybackFrame(surface) {
+    const player = playback[surface];
+    if (player.frameURL) URL.revokeObjectURL(player.frameURL);
+    player.frameURL = '';
+    player.frameIndex = animationRange().start;
+  }
+  function clearPlaybackFrames() {
+    for (const surface of Object.keys(playback)) clearPlaybackFrame(surface);
   }
   function cleanURLs() {
-    stopPlaybackClock();
-    clearPlaybackFrame();
+    stopPlaybackClocks();
+    clearPlaybackFrames();
     for (const url of outputURLs) URL.revokeObjectURL(url);
     outputURLs = [];
     outputMedia = [];
@@ -333,7 +345,8 @@
   }
   function clearTimeline() {
     if (timelineGesture) {
-      animationPlaying = timelineGesture.playing;
+      for (const surface of Object.keys(playback))
+        playback[surface].playing = timelineGesture.playing[surface];
       trimEdits.delete(timelineGesture.key);
       timelineGesture = null;
     }
@@ -378,23 +391,30 @@
       if (revision === timelineRevision) strip.setAttribute('aria-busy', 'false');
     }
   }
-  function displayPlaybackFrame(blob, index, editorBlob) {
-    const url = URL.createObjectURL(blob),
-      editorURL = URL.createObjectURL(editorBlob);
-    if (playbackFrameURL) URL.revokeObjectURL(playbackFrameURL);
-    if (editorPlaybackFrameURL) URL.revokeObjectURL(editorPlaybackFrameURL);
-    playbackFrameURL = url;
-    editorPlaybackFrameURL = editorURL;
-    playbackFrameIndex = index;
-    for (const img of document.querySelectorAll('[data-animated-url]')) {
-      img.src = img.id === 'animated-canvas-preview' ? editorURL : url;
+  function displayPlaybackFrame(surface, blob, index) {
+    const player = playback[surface],
+      url = URL.createObjectURL(blob);
+    if (player.frameURL) URL.revokeObjectURL(player.frameURL);
+    player.frameURL = url;
+    player.frameIndex = index;
+    if (surface === 'editor') {
+      const animatedCanvas = $('animated-canvas-preview');
+      animatedCanvas.src = url;
+      animatedCanvas.dataset.frameIndex = String(index);
+      animatedCanvas.hidden = false;
+      $('editor-canvas').classList.add('playback-hidden');
+      return;
+    }
+    for (const img of document.querySelectorAll(
+      '[data-animated-url]:not(#animated-canvas-preview)',
+    )) {
+      img.src = url;
       img.dataset.frameIndex = String(index);
     }
-    $('animated-canvas-preview').hidden = false;
-    $('editor-canvas').classList.add('playback-hidden');
   }
-  async function renderPlaybackFrame(index, token) {
-    const destination = mode,
+  async function renderPlaybackFrame(surface, index, token) {
+    const player = playback[surface],
+      destination = mode,
       rev = previewRevision;
     try {
       const settings = clone(state()),
@@ -403,85 +423,84 @@
           destination === 'seventv'
             ? uploadSize()
             : { width: modes[destination].sizes[0], height: modes[destination].sizes[0] },
-        [result, editorResult] = await Promise.all([
-          engine.call('previewFrame', {
-            index,
-            state: settings,
-            size: output.width,
-            height: output.height,
-          }),
-          engine.call('previewFrame', {
-            index,
-            state: settings,
-            size: d.width,
-            height: d.height,
-          }),
-        ]);
-      if (token !== playbackRevision || rev !== previewRevision || destination !== mode) return;
-      displayPlaybackFrame(result.blob, result.index, editorResult.blob);
-      if (!animationPlaying) return;
+        size = surface === 'editor' ? d : output,
+        result = await engine.call('previewFrame', {
+          index,
+          state: settings,
+          size: size.width,
+          height: size.height,
+        });
+      if (token !== player.revision || rev !== previewRevision || destination !== mode) return;
+      displayPlaybackFrame(surface, result.blob, result.index);
+      if (!player.playing) return;
       const next = result.index >= animationRange().end ? animationRange().start : result.index + 1,
         delay = playbackDelay(source.frameDelays[result.index]);
-      playbackTimer = setTimeout(() => renderPlaybackFrame(next, token), delay);
+      player.timer = setTimeout(() => renderPlaybackFrame(surface, next, token), delay);
     } catch (error) {
-      if (token === playbackRevision) {
-        animationPlaying = false;
-        applyPlayback();
-        report(`Preview playback stopped: ${error.message}`, true);
+      if (token === player.revision) {
+        player.playing = false;
+        applyPlayback(surface);
+        report(
+          `${surface === 'editor' ? 'Canvas' : 'Preview'} playback stopped: ${error.message}`,
+          true,
+        );
       }
     }
   }
-  function startPlayback(restart = false) {
-    const token = stopPlaybackClock();
+  function startPlayback(surface, restart = false) {
+    const player = playback[surface],
+      token = stopPlaybackClock(surface);
     if (
       restart ||
-      !playbackFrameURL ||
-      playbackFrameIndex < animationRange().start ||
-      playbackFrameIndex > animationRange().end
+      !player.frameURL ||
+      player.frameIndex < animationRange().start ||
+      player.frameIndex > animationRange().end
     ) {
-      playbackFrameIndex = animationRange().start;
-      renderPlaybackFrame(playbackFrameIndex, token);
+      player.frameIndex = animationRange().start;
+      renderPlaybackFrame(surface, player.frameIndex, token);
       return;
     }
     const next =
-        playbackFrameIndex >= animationRange().end
-          ? animationRange().start
-          : playbackFrameIndex + 1,
-      delay = playbackDelay(source.frameDelays[playbackFrameIndex]);
-    playbackTimer = setTimeout(() => renderPlaybackFrame(next, token), delay);
+        player.frameIndex >= animationRange().end ? animationRange().start : player.frameIndex + 1,
+      delay = playbackDelay(source.frameDelays[player.frameIndex]);
+    player.timer = setTimeout(() => renderPlaybackFrame(surface, next, token), delay);
   }
-  function applyPlayback(restart = false) {
-    const active = Boolean(source?.animated && outputMedia.length),
-      action = animationPlaying ? 'Pause' : 'Play';
-    for (const id of ['editor-animation-toggle', 'animation-toggle']) {
-      const control = $(id);
-      control.hidden = !active;
-      control.setAttribute('aria-pressed', String(animationPlaying));
-      control.setAttribute('aria-label', `${action} animated preview`);
-      control.removeAttribute('title');
-      control.querySelector('use').setAttribute('href', animationPlaying ? '#i-pause' : '#i-play');
-      control.querySelector('span').textContent = action;
-    }
-    const animatedCanvas = $('animated-canvas-preview'),
-      editorCanvas = $('editor-canvas');
+  function applyPlayback(surface, restart = false) {
+    const player = playback[surface],
+      isEditor = surface === 'editor',
+      control = $(isEditor ? 'editor-animation-toggle' : 'animation-toggle'),
+      label = isEditor ? 'canvas' : 'chat preview',
+      active = Boolean(source?.animated && outputMedia.length),
+      action = player.playing ? 'Pause' : 'Play';
+    control.hidden = !active;
+    control.setAttribute('aria-pressed', String(player.playing));
+    control.setAttribute('aria-label', `${action} animated ${label}`);
+    control.removeAttribute('title');
+    control.querySelector('use').setAttribute('href', player.playing ? '#i-pause' : '#i-play');
+    control.querySelector('span').textContent = action;
     if (!active) {
-      stopPlaybackClock();
-      animatedCanvas.hidden = true;
-      animatedCanvas.removeAttribute('src');
-      editorCanvas.classList.remove('playback-hidden');
+      stopPlaybackClock(surface);
+      if (isEditor) {
+        $('animated-canvas-preview').hidden = true;
+        $('animated-canvas-preview').removeAttribute('src');
+        $('editor-canvas').classList.remove('playback-hidden');
+      }
       return;
     }
-    const media = outputMedia[0];
-    animatedCanvas.dataset.animatedUrl = media.url;
-    animatedCanvas.dataset.posterUrl = media.posterUrl;
-    if (editorPlaybackFrameURL) animatedCanvas.src = editorPlaybackFrameURL;
-    else animatedCanvas.removeAttribute('src');
-    animatedCanvas.hidden = !editorPlaybackFrameURL;
-    editorCanvas.classList.toggle('playback-hidden', Boolean(editorPlaybackFrameURL));
-    if (animationPlaying) startPlayback(restart);
+    if (isEditor) {
+      const animatedCanvas = $('animated-canvas-preview'),
+        media = outputMedia[0];
+      animatedCanvas.dataset.animatedUrl = media.url;
+      animatedCanvas.dataset.posterUrl = media.posterUrl;
+      if (player.frameURL) animatedCanvas.src = player.frameURL;
+      else animatedCanvas.removeAttribute('src');
+      animatedCanvas.hidden = !player.frameURL;
+      $('editor-canvas').classList.toggle('playback-hidden', Boolean(player.frameURL));
+    }
+    if (player.playing) startPlayback(surface, restart);
     else {
-      const token = stopPlaybackClock();
-      if (restart || !editorPlaybackFrameURL) renderPlaybackFrame(playbackFrameIndex, token);
+      const token = stopPlaybackClock(surface);
+      if (restart || !player.frameURL) renderPlaybackFrame(surface, player.frameIndex, token);
     }
   }
   function populateOutputs(items = []) {
@@ -556,13 +575,14 @@
     }
     $('preview-placeholder').hidden = Boolean(media);
     $('reaction').hidden = mode !== 'emoji' || !media;
-    applyPlayback(true);
+    applyPlayback('editor', true);
+    applyPlayback('preview', true);
   }
   function invalidate() {
     ++previewRevision;
     clearTimeout(previewTimer);
-    stopPlaybackClock();
-    clearPlaybackFrame();
+    stopPlaybackClocks();
+    clearPlaybackFrames();
     outputs = [];
     busy = Boolean(source);
     $('export-status').textContent = source ? 'Preparing export…' : 'Waiting for an image';
@@ -667,7 +687,7 @@
       if (editorImage) editorImage.close();
       editorImage = preview;
       source = loaded;
-      animationPlaying = true;
+      for (const player of Object.values(playback)) player.playing = true;
       states = modeMap(() => fresh());
       history = modeMap(() => []);
       future = modeMap(() => []);
@@ -692,7 +712,7 @@
       $('empty-import').hidden = true;
       $('replace').hidden = false;
       $('canvas-instruction').textContent =
-        'Drag to reposition · Scroll to zoom 1% · Guides appear at center';
+        'Drag to reposition · Scroll slowly or quickly to vary zoom · Guides appear at center';
       $('canvas-title').textContent = modes[mode].label;
       $('canvas-format').textContent = loaded.animated ? 'ANIMATED SOURCE' : 'PNG · TRANSPARENT';
       syncControls();
@@ -775,10 +795,13 @@
     theme = 'light';
     updateChat();
   };
-  for (const id of ['editor-animation-toggle', 'animation-toggle'])
+  for (const [id, surface] of [
+    ['editor-animation-toggle', 'editor'],
+    ['animation-toggle', 'preview'],
+  ])
     $(id).onclick = () => {
-      animationPlaying = !animationPlaying;
-      applyPlayback();
+      playback[surface].playing = !playback[surface].playing;
+      applyPlayback(surface);
     };
   const trimEdits = new Set();
   for (const key of ['start-frame', 'end-frame']) {
@@ -812,8 +835,11 @@
     const update = (value, preview = false) => {
       commitSliderValue(key, value);
       if (preview) {
-        playbackFrameIndex = key === 'start-frame' ? animationRange().start : animationRange().end;
-        renderPlaybackFrame(playbackFrameIndex, stopPlaybackClock());
+        const index = key === 'start-frame' ? animationRange().start : animationRange().end;
+        for (const surface of Object.keys(playback)) {
+          playback[surface].frameIndex = index;
+          renderPlaybackFrame(surface, index, stopPlaybackClock(surface));
+        }
       }
     };
     handle.addEventListener('keydown', (e) => {
@@ -848,10 +874,14 @@
         x: e.clientX,
         width: rect.width,
         value: Number($(key).value),
-        playing: animationPlaying,
+        playing: Object.fromEntries(
+          Object.entries(playback).map(([surface, player]) => [surface, player.playing]),
+        ),
       };
-      animationPlaying = false;
-      stopPlaybackClock();
+      for (const surface of Object.keys(playback)) {
+        playback[surface].playing = false;
+        stopPlaybackClock(surface);
+      }
     });
     handle.addEventListener('pointermove', (e) => {
       const gesture = timelineGesture;
@@ -876,10 +906,12 @@
         timelineGesture.key !== key
       )
         return;
-      animationPlaying = timelineGesture.playing;
+      for (const surface of Object.keys(playback))
+        playback[surface].playing = timelineGesture.playing[surface];
       timelineGesture = null;
       trimEdits.delete(key);
-      applyPlayback();
+      applyPlayback('editor');
+      applyPlayback('preview');
     };
     handle.addEventListener('pointerup', finish);
     handle.addEventListener('pointercancel', finish);
@@ -902,6 +934,8 @@
         started = true;
       }
       state()[key] = Number($(key).value);
+      if ((key === 'width' || key === 'stretch') && state().autoFill)
+        state().zoom = fillZoom(state());
       syncControls();
       schedulePreview();
     });
@@ -938,6 +972,11 @@
       s.zoom = fillZoom(s);
       s.x = 0;
       s.y = 0;
+    });
+  $('auto-fill').onclick = () =>
+    change((s) => {
+      s.autoFill = !s.autoFill;
+      if (s.autoFill) s.zoom = fillZoom(s);
     });
   $('trim').onclick = () => {
     if (!hasTransparentMargins()) return;
@@ -1049,7 +1088,9 @@
   });
   const canvas = $('editor-canvas'),
     guides = $('alignment-guides');
-  const wheelPixelThreshold = 40,
+  const wheelPixelThreshold = 80,
+    wheelDiscreteThreshold = 100,
+    wheelMaxSteps = 4,
     wheelGestureGap = 250;
   let wheelPixels = 0,
     wheelDirection = 0,
@@ -1081,13 +1122,17 @@
       }
       wheelDirection = direction;
       wheelTime = e.timeStamp;
-      wheelPixels +=
-        (e.deltaMode || 0) === 0
-          ? Math.min(Math.abs(e.deltaY), wheelPixelThreshold)
-          : wheelPixelThreshold;
+      const magnitude = Math.abs(e.deltaY),
+        discrete =
+          (e.deltaMode || 0) !== 0 || magnitude === wheelDiscreteThreshold || magnitude === 120;
+      if (discrete) wheelPixels = wheelPixelThreshold;
+      else wheelPixels += magnitude;
       if (wheelPixels < wheelPixelThreshold) return;
-      wheelPixels -= wheelPixelThreshold;
-      commitSliderValue('zoom', Number($('zoom').value) + direction);
+      const steps = discrete
+        ? 1
+        : Math.min(wheelMaxSteps, Math.floor(wheelPixels / wheelPixelThreshold));
+      wheelPixels = discrete ? 0 : wheelPixels % wheelPixelThreshold;
+      commitSliderValue('zoom', Number($('zoom').value) + direction * steps);
     },
     { passive: false },
   );
@@ -1258,7 +1303,10 @@
                   startFrame: animationRange().start + 1,
                   endFrame: animationRange().end + 1,
                   durationMs: rangeDuration(),
-                  playing: animationPlaying,
+                  playing: {
+                    canvas: playback.editor.playing,
+                    preview: playback.preview.playing,
+                  },
                 }
               : null,
             settings: clone(state()),

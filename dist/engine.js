@@ -950,6 +950,13 @@ function imageWorker() {
       'This animation cannot fit the destination file-size limit. Shorten it or simplify the artwork.',
     );
   }
+  function limitAspectRatio(width, height) {
+    const roundedWidth = Math.max(1, Math.round(width)),
+      roundedHeight = Math.max(1, Math.round(height));
+    if (roundedWidth >= roundedHeight * 3) return [roundedHeight * 3 - 1, roundedHeight];
+    if (roundedHeight >= roundedWidth * 3) return [roundedWidth, roundedWidth * 3 - 1];
+    return [roundedWidth, roundedHeight];
+  }
   async function render(mode, state, range) {
     if (!frames.length) throw new Error('Import media first.');
     const preset = presets[mode];
@@ -963,7 +970,7 @@ function imageWorker() {
       ratio = Math.min(1, 1000 / Math.max(source.w, source.h)),
       dimensions =
         mode === 'seventv'
-          ? [[Math.max(1, Math.round(source.w * ratio)), Math.max(1, Math.round(source.h * ratio))]]
+          ? [limitAspectRatio(source.w * ratio, source.h * ratio)]
           : preset.sizes.map((size) => [size, size]);
     const outputs = [];
     for (const [size, height] of dimensions) {

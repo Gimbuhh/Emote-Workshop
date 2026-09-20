@@ -65,7 +65,14 @@ const defaults = {
     outline: 0,
     brightness: 100,
   },
-  settings = { ...defaults, x: 0.2, y: -0.3, flip: true, color: '#123456' },
+  settings = {
+    ...defaults,
+    x: 0.2,
+    y: -0.3,
+    flip: true,
+    autoFill: false,
+    color: '#123456',
+  },
   ranges = { twitch: { start: 0, end: 49 }, seventv: { start: 0, end: 99 } },
   elements = {},
   inputs = [],
@@ -111,6 +118,7 @@ const context = {
   rangeDuration: () => (ranges[context.mode].end - ranges[context.mode].start + 1) * 100,
   beginEdit: () => history.push({ ...settings }),
   schedulePreview() {},
+  fillZoom: () => 123,
   syncControls: () => {
     for (const key of Object.keys(defaults)) context.syncSliderValue(key, settings[key]);
   },
@@ -118,7 +126,9 @@ const context = {
   document: {
     querySelectorAll: (selector) => (selector === '[data-slider-value]' ? inputs : buttons),
   },
-  wheelPixelThreshold: 40,
+  wheelPixelThreshold: 80,
+  wheelDiscreteThreshold: 100,
+  wheelMaxSteps: 4,
   wheelGestureGap: 250,
   wheelPixels: 0,
   wheelDirection: 0,
@@ -180,6 +190,10 @@ assert.equal(settings.width, 300);
 type('width', 50);
 assert.equal(settings.width, 100);
 type('width', 180);
+settings.autoFill = true;
+type('width', 200);
+assert.equal(settings.zoom, 123, 'Auto-fill updates Scale when Width changes');
+settings.autoFill = false;
 
 type('stretch', 145);
 assert.equal(settings.stretch, 145);
@@ -274,7 +288,13 @@ for (const lock of ['importing', 'exporting', 'source']) {
 assert.equal(wheel(-0.5), true);
 assert.equal(settings.zoom, 90);
 assert.equal(wheel(-39.5), true);
+assert.equal(settings.zoom, 90);
+assert.equal(wheel(-39.5), true);
+assert.equal(settings.zoom, 90);
+assert.equal(wheel(-0.5), true);
 assert.equal(settings.zoom, 91);
+assert.equal(wheel(-240), true);
+assert.equal(settings.zoom, 94, 'Fast precision scrolling applies proportional zoom steps');
 assert.equal(wheel(1000), true);
 assert.equal(settings.zoom, 90);
 assert.equal(wheel(-1, 1), true);

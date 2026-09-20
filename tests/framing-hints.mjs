@@ -162,7 +162,7 @@ renderer.checkState(valid);
 renderer.checkState({ ...valid, stretch: 200 });
 for (const stretch of [0, 99, 301, NaN, Infinity, '150'])
   assert.throws(() => renderer.checkState({ ...valid, stretch }), /Invalid editing settings/);
-const uploadStart = app.indexOf('  function uploadSize()'),
+const uploadStart = app.indexOf('  function limitAspectRatio('),
   uploadEnd = app.indexOf('  function editorSize()', uploadStart);
 vm.runInContext(app.slice(uploadStart, uploadEnd), context);
 context.source = { width: 384, height: 128, bounds: { w: 384, h: 128 } };
@@ -171,4 +171,12 @@ context.state = () => ({ stretch: 200, trim: false });
 assert.deepEqual({ ...context.uploadSize() }, { width: 384, height: 256 });
 context.source = { width: 800, height: 800 };
 assert.deepEqual({ ...context.uploadSize() }, { width: 500, height: 1000 });
+context.source = { width: 168, height: 128 };
+context.editorImage = { width: 168, height: 128 };
+context.state = () => ({ width: 300, stretch: 100, trim: false });
+assert.deepEqual(
+  { ...context.uploadSize() },
+  { width: 383, height: 128 },
+  '7TV exports remain strictly below a 3:1 aspect ratio',
+);
 console.log('Framing hints and animation-union bounds passed.');

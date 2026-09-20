@@ -73,8 +73,10 @@ const context = {
   source: { animated: true, frameDelays: Array(20).fill(100) },
   importing: false,
   exporting: false,
-  animationPlaying: true,
-  playbackFrameIndex: 0,
+  playback: {
+    editor: { playing: true, frameIndex: 0 },
+    preview: { playing: false, frameIndex: 0 },
+  },
   $: (id) => elements[id],
   animationRange: () => range,
   fresh: () => ({ trim: false, zoom: 90, stretch: 100, speed: 100 }),
@@ -95,7 +97,7 @@ const context = {
   },
   stopPlaybackClock: () => 1,
   applyPlayback() {},
-  renderPlaybackFrame: (index) => previews.push(index),
+  renderPlaybackFrame: (surface, index) => previews.push({ surface, index }),
   commitSliderValue(key, raw) {
     const input = elements[key],
       value = Math.max(Number(input.min), Math.min(Number(input.max), raw));
@@ -128,15 +130,20 @@ range = { start: 0, end: 19 };
 syncInputs();
 const start = elements['trim-start-handle'];
 start.emit('pointerdown', { button: 0, pointerId: 4, clientX: 10 });
-assert.equal(context.animationPlaying, false);
+assert.equal(context.playback.editor.playing, false);
+assert.equal(context.playback.preview.playing, false);
 start.emit('pointermove', { pointerId: 4, clientX: 60 });
 assert.equal(range.start, 5, 'Drag preserves pointer offset and maps to frame count');
-assert.equal(previews.at(-1), 5);
+assert.deepEqual(previews.slice(-2), [
+  { surface: 'editor', index: 5 },
+  { surface: 'preview', index: 5 },
+]);
 start.emit('pointermove', { pointerId: 4, clientX: 70 });
 assert.equal(edits, 1, 'One snapshot per drag');
 start.emit('pointercancel', { pointerId: 4 });
 assert.equal(context.timelineGesture, null);
-assert.equal(context.animationPlaying, true);
+assert.equal(context.playback.editor.playing, true);
+assert.equal(context.playback.preview.playing, false);
 context.importing = true;
 start.emit('pointerdown', { button: 0, pointerId: 5, clientX: 10 });
 assert.equal(context.timelineGesture, null, 'Import lock blocks handles');
