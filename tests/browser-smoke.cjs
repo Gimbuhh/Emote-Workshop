@@ -18,19 +18,28 @@ const assert = require('node:assert/strict');
         const canvas = document.createElement('canvas');
         canvas.width = canvas.height = 128;
         const ctx = canvas.getContext('2d'),
-          stream = canvas.captureStream(30);
+          stream = canvas.captureStream(0),
+          videoTrack = stream.getVideoTracks()[0];
+        if (typeof videoTrack.requestFrame !== 'function')
+          throw new Error('Manual canvas frame capture unavailable in test browser');
         if (!MediaRecorder.isTypeSupported('video/mp4'))
           throw new Error('MP4 recording unavailable in test browser');
         const recorder = new MediaRecorder(stream, { mimeType: 'video/mp4' }),
           chunks = [];
         recorder.ondataavailable = (e) => chunks.push(e.data);
-        const stopped = new Promise((resolve) => (recorder.onstop = resolve));
+        const started = new Promise((resolve) => (recorder.onstart = resolve)),
+          stopped = new Promise((resolve) => (recorder.onstop = resolve));
         recorder.start();
-        for (let f = 0; f < 30; f++) {
+        ctx.fillStyle = '#294865';
+        ctx.fillRect(0, 0, 128, 128);
+        videoTrack.requestFrame();
+        await started;
+        for (let f = 0; f < 60; f++) {
           ctx.fillStyle = '#294865';
           ctx.fillRect(0, 0, 128, 128);
           ctx.fillStyle = '#ef9335';
-          ctx.fillRect(f * 3, 45, 20, 20);
+          ctx.fillRect((f * 3) % 128, 45, 20, 20);
+          videoTrack.requestFrame();
           await new Promise((resolve) => setTimeout(resolve, 1000 / 30));
         }
         recorder.stop();
