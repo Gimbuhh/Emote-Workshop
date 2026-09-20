@@ -17,7 +17,7 @@ const assert = require('node:assert/strict');
       assert.equal(await versionLink.textContent(), `v${displayVersion}`);
       assert.equal(
         await versionLink.getAttribute('href'),
-        `https://github.com/Gimbuhh/Emote-Workshop/releases/tag/v${displayVersion}`,
+        'https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md#12---2026-09-20',
       );
       assert.equal(await versionLink.getAttribute('target'), '_blank');
       assert.equal(await versionLink.getAttribute('rel'), 'noopener noreferrer');

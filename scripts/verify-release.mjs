@@ -33,12 +33,10 @@ const notesPath = `release-notes/${displayVersion}.md`;
 assert(existsSync(resolve(root, notesPath)), `${notesPath} is missing.`);
 
 const changelog = read('CHANGELOG.md');
-assert(
-  new RegExp(`^## ${displayVersion.replaceAll('.', '\\.')} - \\d{4}-\\d{2}-\\d{2}$`, 'm').test(
-    changelog,
-  ),
-  `CHANGELOG.md has no dated ${displayVersion} entry.`,
+const changelogHeading = changelog.match(
+  new RegExp(`^## ${displayVersion.replaceAll('.', '\\.')} - (\\d{4}-\\d{2}-\\d{2})$`, 'm'),
 );
+assert(changelogHeading, `CHANGELOG.md has no dated ${displayVersion} entry.`);
 assert(
   changelog.includes(`Package version: \`${version}\`; Git tag: \`${tag}\`.`),
   `CHANGELOG.md does not bind ${version} to ${tag}.`,
@@ -46,14 +44,16 @@ assert(
 
 for (const path of ['dist/index.html', 'Emote Workshop.html']) {
   const content = read(path);
-  const escapedVersion = displayVersion.replaceAll('.', '\\.');
+  const escapedVersion = displayVersion.replaceAll('.', '\\.'),
+    changelogAnchor = `${displayVersion.replaceAll('.', '')}---${changelogHeading[1]}`,
+    changelogUrl = `https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md#${changelogAnchor}`;
   assert(
     new RegExp(`>v${escapedVersion}</a\\s*>`).test(content),
     `${path} does not display v${displayVersion}.`,
   );
   assert(
-    content.includes(`https://github.com/Gimbuhh/Emote-Workshop/releases/tag/${tag}`),
-    `${path} does not link to the immutable ${tag} release.`,
+    content.includes(changelogUrl),
+    `${path} does not link to the ${displayVersion} changelog entry.`,
   );
 }
 
