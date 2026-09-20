@@ -1593,6 +1593,15 @@ input[type='color'] {
     gap: 6px;
   }
 }
+@media (max-width: 420px) {
+  #import-top {
+    width: 40px;
+    padding: 8px;
+  }
+  #import-top span {
+    display: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *:before,
