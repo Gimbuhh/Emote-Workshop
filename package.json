@@ -1,6 +1,6 @@
 {
   "name": "emote-workshop",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Offline Twitch, Discord, and 7TV emote editor",
   "engines": {
@@ -14,9 +14,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docs:screenshot": "node scripts/capture-readme-screenshot.cjs",
-    "test:browser": "node tests/browser-smoke.cjs && node tests/seventv-smoke.cjs && node tests/framing-smoke.cjs",
+    "test:browser": "node tests/import-link-smoke.cjs && node tests/browser-smoke.cjs && node tests/seventv-smoke.cjs && node tests/framing-smoke.cjs",
     "test:gif": "node tests/gif-regression.mjs",
     "test:avif": "node tests/avif-regression.mjs",
+    "test:apng": "node tests/apng-regression.cjs",
     "test:preview": "node tests/editor-preview.mjs",
     "test:sliders": "node tests/slider-values.mjs",
     "test:framing-hints": "node tests/framing-hints.mjs",
@@ -24,7 +25,7 @@
     "test:gif:verify": "python tests/verify-gif.py",
     "test:build": "node tests/offline-build.mjs",
     "release:verify": "node scripts/verify-release.mjs",
-    "test": "npm run test:build && npm run test:gif && npm run test:avif && npm run test:preview && npm run test:sliders && npm run test:framing-hints && npm run test:timeline && npm run test:browser",
+    "test": "npm run test:build && npm run test:gif && npm run test:avif && npm run test:apng && npm run test:preview && npm run test:sliders && npm run test:framing-hints && npm run test:timeline && npm run test:browser",
     "check": "npm run check:syntax && npm run format:check && npm run check:build"
   },
   "devDependencies": {

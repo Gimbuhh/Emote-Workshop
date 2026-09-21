@@ -2,6 +2,29 @@
 
 All notable changes to Emote Workshop are documented here. Per-version notes are preserved under `release-notes/`. Dates below follow the repository's version commits.
 
+## 1.3 - 2026-09-21
+
+### Added
+
+- **Import media** accepts 7TV emote page and CDN links and downloads a selected 1x–4x rendition for local editing, with 4x AVIF as the recommended default and WebP, GIF, and PNG options.
+- Animated media imports decode frames in bounded parallel batches and report decode and transparency-analysis progress.
+- 7TV exports have an AVIF-first format selector with explicit WebP and GIF choices. Unsupported animated AVIF encoding falls back to a locally encoded animated WebP, then GIF, and the actual result is shown before download.
+
+### Changed
+
+- Discord and Twitch animation ranges are no longer cut off at five seconds. The exporter preserves the selected duration when it fits, then samples frames and reduces palette detail as needed to meet each destination's file-size and frame-count limits.
+
+### Fixed
+
+- The plus badge in the empty import control is optically centered.
+- The file-name field uses one contained focus ring instead of a wide double border.
+- Framing toggles have padded, rounded hover and active surfaces that no longer stop abruptly at their content edges.
+- Imported animations begin playing as soon as decoding finishes, continue uninterrupted when export preparation completes, and hand over to processed playback only after an edit or explicit interaction.
+- The canvas playback control keeps a fixed width so switching between **Play** and **Pause** no longer shifts the adjacent **Compare** button.
+- Discord stickers use filtered APNG delta frames so localized motion can remain at 320×320 with its full duration while fitting the 512 KB upload limit.
+
+Package version: `1.3.0`; Git tag: `v1.3`. [Release notes](release-notes/1.3.md).
+
 ## 1.2 - 2026-09-20
 
 ### Added

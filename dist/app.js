@@ -20,7 +20,7 @@
     },
     seventv: {
       label: '7TV emote',
-      hint: 'Up to 1000 px · 7 MB · Below 3:1',
+      hint: 'Up to 1000 px · 7 MB · AVIF preferred with fallbacks',
       sizes: [1000],
       limit: '7 MB max',
       export: 'Export 7TV emote',
@@ -73,7 +73,9 @@
     toastTimer,
     compareMode = false,
     comparePlaybackRevision = 0,
-    originalFrameURL = '';
+    originalFrameURL = '',
+    sourcePreviewURL = '',
+    linkImportBusy = false;
   let animationRanges = modeMap(() => ({ start: 0, end: 1 }));
   const playback = {
     editor: { playing: true, timer: 0, revision: 0, frameIndex: 0, frameURL: '' },
@@ -134,6 +136,7 @@
       'platform-seventv',
       'type-emoji',
       'type-sticker',
+      'seventv-export-format',
       'emote-name',
     ])
       $(id).disabled = locked;
@@ -296,6 +299,25 @@
   function clearPlaybackFrames() {
     for (const surface of Object.keys(playback)) clearPlaybackFrame(surface);
   }
+  function clearSourcePlaybackPreview() {
+    if (!sourcePreviewURL) return;
+    const preview = $('animated-canvas-preview');
+    URL.revokeObjectURL(sourcePreviewURL);
+    sourcePreviewURL = '';
+    preview.removeAttribute('src');
+    preview.style.removeProperty('transform');
+    preview.hidden = true;
+    $('editor-canvas').classList.remove('playback-hidden');
+  }
+  function showSourcePlaybackPreview(file) {
+    clearSourcePlaybackPreview();
+    sourcePreviewURL = URL.createObjectURL(file);
+    const preview = $('animated-canvas-preview');
+    preview.src = sourcePreviewURL;
+    preview.style.transform = `scale(${state().zoom / 100})`;
+    preview.hidden = false;
+    $('editor-canvas').classList.add('playback-hidden');
+  }
   function cleanURLs() {
     stopPlaybackClocks();
     clearPlaybackFrames();
@@ -305,6 +327,7 @@
     outputMedia = [];
   }
   function expectedFormat() {
+    if (mode === 'seventv') return $('seventv-export-format').value.toUpperCase();
     return source?.animated ? (mode === 'sticker' ? 'APNG' : 'GIF') : 'PNG';
   }
   function comparisonMedia() {
@@ -403,6 +426,7 @@
   }
   function setCompareMode(active) {
     compareMode = Boolean(active && source && outputMedia.length);
+    if (compareMode) clearSourcePlaybackPreview();
     $('compare-toggle').setAttribute('aria-pressed', String(compareMode));
     $('drop-zone').classList.toggle('comparing', compareMode);
     $('converted-pane').hidden = !compareMode;
@@ -426,28 +450,6 @@
     const range = animationRanges[destination];
     range.start = Math.max(0, Math.min(total - 2, range.start));
     range.end = Math.max(range.start + 1, Math.min(total - 1, range.end));
-    const duration = () =>
-      source.frameDelays
-        .slice(range.start, range.end + 1)
-        .reduce((sum, delay) => sum + playbackDelay(delay, states[destination].speed ?? 100), 0);
-    while (destination !== 'seventv' && duration() > 5000 && range.end > range.start + 1)
-      range.end--;
-  }
-  function fitAnimationRangeToLimit(destination = mode) {
-    clampAnimationRange(destination);
-    if (destination === 'seventv') return;
-    const range = animationRanges[destination],
-      total = source?.frameDelays?.length || 0,
-      speed = states[destination].speed ?? 100;
-    let duration = source.frameDelays
-      .slice(range.start, range.end + 1)
-      .reduce((sum, delay) => sum + playbackDelay(delay, speed), 0);
-    while (range.end < total - 1) {
-      const nextDelay = playbackDelay(source.frameDelays[range.end + 1], speed);
-      if (duration + nextDelay > 5000) break;
-      range.end++;
-      duration += nextDelay;
-    }
   }
   function syncAnimationControls() {
     const total = source?.frameDelays?.length || 2;
@@ -462,7 +464,7 @@
     syncSliderValue('end-frame', animationRange().end + 1);
     const duration = rangeDuration();
     $('animation-range-summary').textContent =
-      `Frames ${animationRange().start + 1}–${animationRange().end + 1} · ${(duration / 1000).toFixed(1)} s · ${mode === 'seventv' ? 'long animations may be sampled' : '5 s max'}`;
+      `Frames ${animationRange().start + 1}–${animationRange().end + 1} · ${(duration / 1000).toFixed(1)} s · ${mode === 'twitch' ? '60 frames max' : 'long animations may be sampled to fit'}`;
     syncTimeline();
   }
   function configureAnimation() {
@@ -558,6 +560,7 @@
     player.frameURL = url;
     player.frameIndex = index;
     if (surface === 'editor') {
+      clearSourcePlaybackPreview();
       const animatedCanvas = $('animated-canvas-preview');
       animatedCanvas.src = url;
       animatedCanvas.dataset.frameIndex = String(index);
@@ -647,7 +650,7 @@
       isEditor = surface === 'editor',
       control = $(isEditor ? 'editor-animation-toggle' : 'animation-toggle'),
       label = isEditor ? 'canvas' : 'chat preview',
-      active = Boolean(source?.animated && outputMedia.length),
+      active = Boolean(source?.animated && (isEditor || outputMedia.length)),
       action = player.playing ? 'Pause' : 'Play';
     control.hidden = !active;
     control.setAttribute('aria-pressed', String(player.playing));
@@ -668,15 +671,26 @@
     if (isEditor) {
       const animatedCanvas = $('animated-canvas-preview'),
         media = outputMedia[0];
-      animatedCanvas.dataset.animatedUrl = media.url;
-      animatedCanvas.dataset.posterUrl = media.posterUrl;
+      if (media) {
+        animatedCanvas.dataset.animatedUrl = media.url;
+        animatedCanvas.dataset.posterUrl = media.posterUrl;
+      }
       if (player.frameURL) animatedCanvas.src = player.frameURL;
-      else animatedCanvas.removeAttribute('src');
-      animatedCanvas.hidden = !player.frameURL;
-      $('editor-canvas').classList.toggle('playback-hidden', Boolean(player.frameURL));
+      else if (!sourcePreviewURL) animatedCanvas.removeAttribute('src');
+      animatedCanvas.hidden = !(player.frameURL || sourcePreviewURL);
+      $('editor-canvas').classList.toggle(
+        'playback-hidden',
+        Boolean(player.frameURL || sourcePreviewURL),
+      );
+    }
+    if (isEditor && sourcePreviewURL && player.playing) {
+      stopPlaybackClock(surface);
+      syncConvertedPreview(restart);
+      return;
     }
     if (player.playing) startPlayback(surface, restart);
     else {
+      if (isEditor) clearSourcePlaybackPreview();
       const token = stopPlaybackClock(surface);
       if (restart || !player.frameURL) renderPlaybackFrame(surface, player.frameIndex, token);
     }
@@ -754,7 +768,7 @@
       const title = document.createElement('strong');
       title.textContent = `${item?.width || size} × ${item?.height || (mode === 'seventv' ? uploadSize().height : size)}`;
       const subtitle = document.createElement('span');
-      subtitle.textContent = `${item?.format || expectedFormat()} · ${modes[mode].limit}${item?.frames > 1 ? ` · ${item.frames}f` : ''}`;
+      subtitle.textContent = `${item?.format || expectedFormat()}${item?.fallbackFrom ? ` (${item.fallbackFrom} unavailable)` : ''} · ${modes[mode].limit}${item?.frames > 1 ? ` · ${item.frames}f` : ''}`;
       meta.append(title, subtitle);
       const fileSize = document.createElement('span');
       fileSize.className = `output-size${item ? '' : ' waiting'}`;
@@ -796,6 +810,7 @@
     clearTimeout(previewTimer);
     stopPlaybackClocks();
     clearPlaybackFrames();
+    clearSourcePlaybackPreview();
     outputs = [];
     syncSizeComparison();
     busy = Boolean(source);
@@ -822,6 +837,7 @@
         mode: destination,
         state: clone(state()),
         range: animationPayload(),
+        format: destination === 'seventv' ? $('seventv-export-format').value : undefined,
       });
       if (rev !== previewRevision || destination !== mode) return;
       outputs = result;
@@ -865,6 +881,7 @@
     );
     $('platform-seventv').setAttribute('aria-pressed', String(mode === 'seventv'));
     $('discord-types').hidden = mode !== 'emoji' && mode !== 'sticker';
+    $('seventv-export-control').hidden = mode !== 'seventv';
     $('type-emoji').setAttribute('aria-pressed', String(mode === 'emoji'));
     $('type-sticker').setAttribute('aria-pressed', String(mode === 'sticker'));
     $('destination-hint').textContent = modes[mode].hint;
@@ -881,6 +898,7 @@
   async function importImage(file) {
     if (!file || importing || exporting || !engine) return;
     importing = true;
+    clearSourcePlaybackPreview();
     setCompareMode(false);
     clearTimeline();
     invalidate();
@@ -892,12 +910,17 @@
       file.type === 'video/mp4' || /\.mp4$/i.test(file.name || '')
         ? 'Converting MP4 frames…'
         : 'Opening media…';
+    let importedFile = false;
     try {
-      const loaded = await engine.call('load', { file }),
+      const loaded = await engine.call('load', { file }, ({ phase, current, total }) => {
+          const action = phase === 'analyze' ? 'Checking transparency' : 'Decoding animation';
+          $('loading-label').textContent = `${action}… ${current}/${total}`;
+        }),
         preview = await createImageBitmap(loaded.preview);
       if (editorImage) editorImage.close();
       editorImage = preview;
       source = loaded;
+      importedFile = true;
       const originalThumbnail = $('original-thumbnail'),
         originalContext = originalThumbnail.getContext('2d'),
         thumbnailScale = Math.min(64 / preview.width, 64 / preview.height);
@@ -951,8 +974,9 @@
       $('drop-zone').setAttribute('aria-busy', 'false');
       setEnabled();
       if (source) {
-        buildTimeline();
         invalidate();
+        if (source.animated && importedFile) showSourcePlaybackPreview(file);
+        buildTimeline();
         await renderPreview();
       } else {
         busy = false;
@@ -960,8 +984,112 @@
       }
     }
   }
+  const sevenTvIdPattern = /^(?:[a-f\d]{24}|[0-9A-HJKMNP-TV-Z]{26})$/i,
+    sevenTvDownloadTimeout = 30000;
+  function sevenTvEmoteId(value) {
+    let url;
+    try {
+      url = new URL(value.trim());
+    } catch {
+      return '';
+    }
+    if (url.protocol !== 'https:') return '';
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const match =
+      host === '7tv.app'
+        ? url.pathname.match(/^\/emotes\/([^/]+)\/?$/)
+        : host === 'cdn.7tv.app'
+          ? url.pathname.match(/^\/emote\/([^/]+)\/(?:[1-4]x\.(?:avif|gif|png|webp))\/?$/i)
+          : null;
+    return match && sevenTvIdPattern.test(match[1]) ? match[1] : '';
+  }
+  function openImportDialog() {
+    if (importing || exporting || linkImportBusy || $('import-dialog').open) return;
+    $('seventv-link').value = '';
+    $('link-import-status').textContent =
+      '4x AVIF is recommended. Format availability depends on the emote.';
+    $('link-import-status').classList.remove('error');
+    $('import-dialog').showModal();
+  }
+  function setLinkImportBusy(value) {
+    linkImportBusy = value;
+    $('seventv-link').disabled = value;
+    $('seventv-size').disabled = value;
+    $('seventv-format').disabled = value;
+    $('import-seventv').disabled = value;
+    $('browse-files').disabled = value;
+  }
+  async function importSevenTvLink(value, requestedSize, requestedFormat) {
+    const id = sevenTvEmoteId(value);
+    if (!id) {
+      $('link-import-status').textContent =
+        'Paste a valid 7tv.app emote or cdn.7tv.app emote link.';
+      $('link-import-status').classList.add('error');
+      $('seventv-link').focus();
+      return;
+    }
+    const formats = {
+        avif: 'image/avif',
+        webp: 'image/webp',
+        gif: 'image/gif',
+        png: 'image/png',
+      },
+      size = ['1', '2', '3', '4'].includes(requestedSize) ? requestedSize : '4',
+      format = Object.hasOwn(formats, requestedFormat) ? requestedFormat : 'avif';
+    const status = $('link-import-status');
+    setLinkImportBusy(true);
+    status.textContent = `Downloading the ${size}x ${format.toUpperCase()}…`;
+    status.classList.remove('error');
+    const controller = new AbortController(),
+      timeout = setTimeout(() => controller.abort(), sevenTvDownloadTimeout);
+    try {
+      const response = await fetch(`https://cdn.7tv.app/emote/${id}/${size}x.${format}`, {
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`7TV returned ${response.status}.`);
+      const statedBytes = Number(response.headers.get('content-length') || 0);
+      if (statedBytes > 100 * 1024 * 1024) throw new Error('The 7TV emote is larger than 100 MB.');
+      const blob = await response.blob();
+      clearTimeout(timeout);
+      if (!blob.size || blob.size > 100 * 1024 * 1024)
+        throw new Error('The 7TV emote is empty or larger than 100 MB.');
+      const file = new File([blob], `7tv_${id}.${format}`, { type: formats[format] });
+      $('import-dialog').close();
+      await importImage(file);
+    } catch (error) {
+      const detail =
+        error.name === 'AbortError' ? '7TV took longer than 30 seconds to respond.' : error.message;
+      status.textContent = `Could not import that 7TV emote. ${detail}`;
+      status.classList.add('error');
+    } finally {
+      clearTimeout(timeout);
+      setLinkImportBusy(false);
+    }
+  }
   for (const id of ['import-top', 'empty-import', 'replace'])
-    $(id).addEventListener('click', () => $('file-input').click());
+    $(id).addEventListener('click', openImportDialog);
+  $('browse-files').addEventListener('click', () => {
+    $('import-dialog').close();
+    $('file-input').click();
+  });
+  $('import-dialog').addEventListener('click', (event) => {
+    if (event.target === $('import-dialog') && !linkImportBusy) $('import-dialog').close();
+  });
+  $('import-dialog').addEventListener('cancel', (event) => {
+    if (linkImportBusy) event.preventDefault();
+  });
+  $('import-dialog').addEventListener('close', () => setLinkImportBusy(false));
+  $('import-dialog')
+    .querySelector('form')
+    .addEventListener('submit', (event) => {
+      if (event.submitter?.value === 'cancel') return;
+      event.preventDefault();
+      importSevenTvLink(
+        $('seventv-link').value,
+        $('seventv-size').value,
+        $('seventv-format').value,
+      );
+    });
   $('file-input').addEventListener('change', (e) => {
     importImage(e.target.files[0]);
     e.target.value = '';
@@ -1011,6 +1139,10 @@
   $('platform-seventv').onclick = () => selectMode('seventv');
   $('type-emoji').onclick = () => selectMode('emoji');
   $('type-sticker').onclick = () => selectMode('sticker');
+  $('seventv-export-format').addEventListener('change', () => {
+    if (mode !== 'seventv' || !source || importing || exporting) return;
+    schedulePreview();
+  });
   $('theme-dark').onclick = () => {
     theme = 'dark';
     updateChat();
@@ -1255,7 +1387,6 @@
         started = true;
       }
       state()[key] = Number($(key).value);
-      if (key === 'speed') fitAnimationRangeToLimit();
       if ((key === 'width' || key === 'stretch') && state().autoFill)
         state().zoom = fillZoom(state());
       syncControls();
@@ -1551,7 +1682,11 @@
     $('export-label').textContent = 'Packing files…';
     try {
       const result = all
-        ? await engine.call('all', { states: clone(states), ranges: clone(animationRanges) })
+        ? await engine.call('all', {
+            states: clone(states),
+            ranges: clone(animationRanges),
+            formats: { seventv: $('seventv-export-format').value },
+          })
         : { [mode]: outputs };
       if (!all && mode !== 'twitch') {
         const item = outputs[0];
@@ -1597,6 +1732,7 @@
   setEnabled();
   window.addEventListener('beforeunload', () => {
     cleanURLs();
+    clearSourcePlaybackPreview();
     if (editorImage) editorImage.close();
     engine?.close();
   });

@@ -74,6 +74,7 @@ const context = {
   previewRevision: 0,
   compareMode: false,
   originalFrameURL: '',
+  sourcePreviewURL: '',
   animationRange: () => ({ start: 0, end: 1 }),
   setTimeout(fn, delay) {
     timers.push({ fn, delay });

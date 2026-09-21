@@ -115,7 +115,7 @@ const { readFileSync } = require('node:fs');
           const output = all.seventv[0],
             decoder = new ImageDecoder({
               data: await output.blob.arrayBuffer(),
-              type: 'image/gif',
+              type: output.blob.type,
             });
           await decoder.tracks.ready;
           let duration = 0;
@@ -141,7 +141,7 @@ const { readFileSync } = require('node:fs');
             'loadVideo',
             {
               videoFrames: twitchFrames,
-              frameDelays: Array(120).fill(40),
+              frameDelays: Array(120).fill(100),
               details: { width: 1, height: 1, bytes: 1, originalFrames: 120, sampled: false },
             },
             twitchFrames,
@@ -194,6 +194,7 @@ const { readFileSync } = require('node:fs');
               bytes: twitchFrameLimited.bytes,
               frames: twitchFrameLimited.frames,
               limit: twitchFrameLimited.limit,
+              duration: twitchFrameLimited.duration,
             },
             twitchStatic: twitchStatic.map((item) => ({
               size: item.size,
@@ -209,6 +210,9 @@ const { readFileSync } = require('node:fs');
               frames: output.frames,
               duration,
               reported: output.duration,
+              mime: output.blob.type,
+              format: output.format,
+              fallbackFrom: output.fallbackFrom,
             },
             twitch: all.twitch.map((o) => ({
               size: o.size,
@@ -258,7 +262,8 @@ const { readFileSync } = require('node:fs');
       assert(result.twitchFrameLimited.bytes <= 512 * 1024);
       assert.equal(result.twitchFrameLimited.limit, 512 * 1024);
       assert(result.twitchFrameLimited.frames <= 60);
-      assert(result.discordDurations.every((d) => d <= 5000));
+      assert.equal(result.twitchFrameLimited.duration, 12000);
+      assert(result.discordDurations.every((d) => d === 7200));
       assert.deepEqual(result.rangedDurations, {
         twitch: 3600,
         emoji: 2400,
@@ -267,13 +272,16 @@ const { readFileSync } = require('node:fs');
       });
       assert.equal(result.animation.duration, 7200);
       assert.equal(result.animation.reported, 7200);
+      assert.equal(result.animation.mime, 'image/webp');
+      assert.equal(result.animation.format, 'WEBP');
+      assert.equal(result.animation.fallbackFrom, 'AVIF');
       assert(result.animation.frames <= 1000);
       assert(result.animation.bytes <= 7000000);
       assert(result.sourceFrameCap);
       assert(result.invalidTiming);
       await page.locator('#file-input').setInputFiles({
-        name: 'wide.gif',
-        mimeType: 'image/gif',
+        name: 'wide.webp',
+        mimeType: result.animation.mime,
         buffer: Buffer.from(result.animationData),
       });
       delete result.animationData;
@@ -311,7 +319,7 @@ const { readFileSync } = require('node:fs');
         'false',
       );
       await page.click('#platform-twitch');
-      assert.equal(await page.locator('#end-frame').inputValue(), '8');
+      assert.equal(await page.locator('#end-frame').inputValue(), '12');
       await page.evaluate(() => {
         const input = document.querySelector('#end-frame');
         input.value = '4';
@@ -321,9 +329,9 @@ const { readFileSync } = require('node:fs');
       assert.equal(await page.locator('#end-frame').inputValue(), '12');
       assert.match(await page.locator('#animation-range-summary').textContent(), /7\.2 s/);
       await page.click('#platform-discord');
-      assert.equal(await page.locator('#end-frame').inputValue(), '8');
+      assert.equal(await page.locator('#end-frame').inputValue(), '12');
       await page.click('#type-sticker');
-      assert.equal(await page.locator('#end-frame').inputValue(), '8');
+      assert.equal(await page.locator('#end-frame').inputValue(), '12');
       await page.click('#platform-twitch');
       assert.equal(await page.locator('#end-frame').inputValue(), '4');
       await page.click('#platform-seventv');
@@ -333,18 +341,24 @@ const { readFileSync } = require('node:fs');
       await page.click('#export-current');
       const animatedDownload = await animatedDownloadPromise;
       const animatedBuffer = readFileSync(await animatedDownload.path());
-      const downloadedDuration = await page.evaluate(async (bytes) => {
-        const decoder = new ImageDecoder({ data: new Uint8Array(bytes), type: 'image/gif' });
-        await decoder.tracks.ready;
-        let duration = 0;
-        for (let i = 0; i < decoder.tracks.selectedTrack.frameCount; i++) {
-          const frame = (await decoder.decode({ frameIndex: i })).image;
-          duration += frame.duration / 1000;
-          frame.close();
-        }
-        decoder.close();
-        return duration;
-      }, Array.from(animatedBuffer));
+      const animatedMime = animatedDownload.suggestedFilename().endsWith('.webp')
+        ? 'image/webp'
+        : 'image/gif';
+      const downloadedDuration = await page.evaluate(
+        async ({ bytes, mime }) => {
+          const decoder = new ImageDecoder({ data: new Uint8Array(bytes), type: mime });
+          await decoder.tracks.ready;
+          let duration = 0;
+          for (let i = 0; i < decoder.tracks.selectedTrack.frameCount; i++) {
+            const frame = (await decoder.decode({ frameIndex: i })).image;
+            duration += frame.duration / 1000;
+            frame.close();
+          }
+          decoder.close();
+          return duration;
+        },
+        { bytes: Array.from(animatedBuffer), mime: animatedMime },
+      );
       assert.equal(downloadedDuration, 7200);
       const animatedZipPromise = page.waitForEvent('download');
       await page.click('#export-all');
@@ -354,10 +368,10 @@ const { readFileSync } = require('node:fs');
           const zip = await JSZip.loadAsync(new Uint8Array(bytes));
           const durations = {};
           for (const [name, file] of Object.entries(zip.files)) {
-            if (!name.endsWith('.gif')) continue;
+            if (!name.endsWith('.gif') && !name.endsWith('.webp')) continue;
             const decoder = new ImageDecoder({
               data: await file.async('uint8array'),
-              type: 'image/gif',
+              type: name.endsWith('.webp') ? 'image/webp' : 'image/gif',
             });
             await decoder.tracks.ready;
             let duration = 0;
@@ -377,8 +391,8 @@ const { readFileSync } = require('node:fs');
         'twitch/wide_twitch_112.gif': 2400,
         'twitch/wide_twitch_56.gif': 2400,
         'twitch/wide_twitch_28.gif': 2400,
-        'emoji/wide_emoji_128.gif': 4800,
-        'seventv/wide_seventv_260x128.gif': 7200,
+        'emoji/wide_emoji_128.gif': 7200,
+        'seventv/wide_seventv_260x128.webp': 7200,
       });
       await page.click('#sample');
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
@@ -395,10 +409,31 @@ const { readFileSync } = require('node:fs');
       await page.click('#undo');
       assert.equal(await page.locator('#zoom').inputValue(), '90');
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      assert.equal(
+        await page
+          .locator('#seventv-export-control')
+          .evaluate((control) => control.closest('.export')?.querySelector('h2')?.textContent),
+        'Export',
+      );
+      assert.equal(await page.locator('#seventv-export-format').inputValue(), 'avif');
+      assert.match(await page.locator('#output-list').textContent(), /WEBP \(AVIF unavailable\)/);
+      await page.locator('#seventv-export-format').selectOption('webp');
+      await page.waitForFunction(
+        () =>
+          !document.querySelector('#export-current').disabled &&
+          !document.querySelector('#output-list').textContent.includes('fallback'),
+      );
+      assert.match(await page.locator('#output-list').textContent(), /WEBP · 7 MB max/);
+      await page.locator('#seventv-export-format').selectOption('gif');
+      await page.waitForFunction(
+        () =>
+          !document.querySelector('#export-current').disabled &&
+          document.querySelector('#output-list').textContent.includes('GIF · 7 MB max'),
+      );
       const downloadPromise = page.waitForEvent('download');
       await page.click('#export-current');
       const download = await downloadPromise;
-      assert.match(download.suggestedFilename(), /_seventv_\d+x\d+\.png$/);
+      assert.match(download.suggestedFilename(), /_seventv_\d+x\d+\.gif$/);
       const zipPromise = page.waitForEvent('download');
       await page.click('#export-all');
       const zip = await zipPromise;

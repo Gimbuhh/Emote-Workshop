@@ -10,7 +10,7 @@
     />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' data: blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; worker-src blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self' data: blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; worker-src blob:; connect-src https://cdn.7tv.app; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <title>Emote Workshop</title>
     <link rel="icon" type="image/png" href="assets/glorp-64.png" />
@@ -61,6 +61,7 @@
           <rect x="3" y="4" width="18" height="16" rx="2" />
           <path d="M12 4v16M8 9l-3 3 3 3m8-6 3 3-3 3" />
         </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
         <symbol id="i-github" viewBox="0 0 24 24">
           <path
             d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.82a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"
@@ -79,8 +80,8 @@
           href="https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Version 1.2 — view changelog on GitHub (opens in a new tab)"
-          >v1.2</a
+          aria-label="Version 1.3 — view changelog on GitHub (opens in a new tab)"
+          >v1.3</a
         >
       </div>
       <div class="header-actions">
@@ -457,9 +458,11 @@
                     </div>
                     <button id="empty-import" class="empty-import">
                       <span class="import-glyph"
-                        ><svg><use href="#i-image" /></svg><span>+</span></span
+                        ><svg><use href="#i-image" /></svg
+                        ><span
+                          ><svg aria-hidden="true"><use href="#i-plus" /></svg></span></span
                       ><strong>Import media</strong><span>Drop, paste, or click to browse</span
-                      ><small>PNG, JPG, GIF, WebP, AVIF, or MP4 · Up to 100 MB</small>
+                      ><small>Files or 7TV links · Up to 100 MB</small>
                     </button>
                   </div>
                 </figure>
@@ -757,6 +760,14 @@
               spellcheck="false"
               autocomplete="off"
             />
+            <label id="seventv-export-control" class="export-format-control" hidden>
+              <span>Export format</span>
+              <select id="seventv-export-format">
+                <option value="avif" selected>AVIF · preferred (fallback enabled)</option>
+                <option value="webp">WebP</option>
+                <option value="gif">GIF</option>
+              </select>
+            </label>
             <div class="output-heading">
               <span>Files</span><span id="export-status" role="status">Waiting for an image</span>
             </div>
@@ -771,6 +782,49 @@
         </aside>
       </div>
     </main>
+    <dialog id="import-dialog" class="import-dialog" aria-labelledby="import-dialog-title">
+      <form method="dialog" class="import-dialog-card">
+        <div class="import-dialog-heading">
+          <div>
+            <h2 id="import-dialog-title">Import media</h2>
+            <p>Choose a local file or paste a 7TV emote link.</p>
+          </div>
+          <button class="dialog-close" value="cancel" aria-label="Close import dialog">×</button>
+        </div>
+        <button type="button" id="browse-files" class="button primary browse-files">
+          <svg aria-hidden="true"><use href="#i-upload" /></svg><span>Browse files</span>
+        </button>
+        <p class="import-formats">PNG, JPG, GIF, WebP, AVIF, or MP4 · Up to 100 MB</p>
+        <div class="import-divider"><span>or</span></div>
+        <label for="seventv-link">7TV emote link</label>
+        <div class="link-import-row">
+          <input
+            id="seventv-link"
+            type="url"
+            inputmode="url"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="https://7tv.app/emotes/…"
+          />
+          <select id="seventv-size" aria-label="7TV import size">
+            <option value="4" selected>4x</option>
+            <option value="3">3x</option>
+            <option value="2">2x</option>
+            <option value="1">1x</option>
+          </select>
+          <select id="seventv-format" aria-label="7TV import format">
+            <option value="avif" selected>AVIF</option>
+            <option value="webp">WebP</option>
+            <option value="gif">GIF</option>
+            <option value="png">PNG</option>
+          </select>
+          <button type="submit" id="import-seventv" class="button">Import emote</button>
+        </div>
+        <p id="link-import-status" class="link-import-status" role="status">
+          4x AVIF is recommended. Format availability depends on the emote.
+        </p>
+      </form>
+    </dialog>
     <input
       id="file-input"
       type="file"

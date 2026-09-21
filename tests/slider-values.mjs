@@ -204,13 +204,13 @@ assert.equal(settings.stretch, 100);
 type('stretch', 150);
 type('speed', 75);
 assert.equal(settings.speed, 75);
-assert.equal(ranges.twitch.end, 36, 'Slowing down trims the range to five seconds');
+assert.equal(ranges.twitch.end, 49, 'Slowing down keeps the selected frames');
 type('speed', 10);
 assert.equal(settings.speed, 50);
-assert.equal(ranges.twitch.end, 24, 'Further slowing down trims additional end frames');
+assert.equal(ranges.twitch.end, 49, 'Longer playback does not trim the range');
 type('speed', 300);
 assert.equal(settings.speed, 150);
-assert.equal(ranges.twitch.end, 74, 'Speeding up restores end frames up to five seconds');
+assert.equal(ranges.twitch.end, 49, 'Speed changes never rewrite an intentional trim');
 for (const button of buttons.slice(0, 7)) button.dispatchEvent(new Event('click'));
 for (const [key, value] of Object.entries(defaults)) assert.equal(settings[key], value);
 assert.equal(settings.flip, true);
@@ -227,15 +227,15 @@ assert.equal(elements['start-frame-value'].max, '49');
 type('start-frame', 3);
 assert.equal(ranges.twitch.start, 2);
 type('end-frame', 100);
-assert.equal(ranges.twitch.end, 51, 'Twitch range remains within five seconds');
-assert.equal(elements['end-frame-value'].value, '52');
+assert.equal(ranges.twitch.end, 99, 'Twitch can select the full animation');
+assert.equal(elements['end-frame-value'].value, '100');
 context.mode = 'seventv';
 context.syncAnimationControls();
 type('end-frame', 70);
 assert.equal(ranges.seventv.end, 69);
 buttons.at(-1).dispatchEvent(new Event('click'));
 assert.equal(ranges.seventv.end, 99, '7TV end reset can use the full animation');
-assert.equal(ranges.twitch.end, 51, 'Other destination ranges are unchanged');
+assert.equal(ranges.twitch.end, 99, 'Other destination ranges are unchanged');
 const undoContext = {
   mode: 'emoji',
   source: { animated: true },

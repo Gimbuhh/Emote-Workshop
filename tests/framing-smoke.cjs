@@ -10,6 +10,17 @@ const assert = require('node:assert/strict');
       const page = await browser.newPage();
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
+      await page.addInitScript(() => {
+        const send = Worker.prototype.postMessage;
+        Worker.prototype.postMessage = function (message, ...rest) {
+          if (window.__delayNextRender && message?.action === 'render') {
+            window.__delayNextRender = false;
+            setTimeout(() => send.call(this, message, ...rest), 500);
+            return;
+          }
+          return send.call(this, message, ...rest);
+        };
+      });
       await page.goto(pathToFileURL(path.resolve(file)).href);
       const version = require('../package.json').version,
         displayVersion = version.endsWith('.0') ? version.slice(0, -2) : version,
@@ -55,14 +66,14 @@ const assert = require('node:assert/strict');
       });
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
       assert.match(await page.locator('#original-bytes').textContent(), /^PNG · /);
-      assert.match(await page.locator('#result-bytes').textContent(), /^PNG · /);
+      assert.match(await page.locator('#result-bytes').textContent(), /^WEBP · /);
       assert.match(await page.locator('#size-change').textContent(), /smaller|larger|same size/);
       await page.click('#compare-toggle');
       assert.equal(await page.locator('#compare-toggle').getAttribute('aria-pressed'), 'true');
       assert.equal(await page.locator('.original-pane').isVisible(), true);
       assert.equal(await page.locator('#converted-pane').isVisible(), true);
       assert.match(await page.locator('#compare-original-meta').textContent(), /^PNG · /);
-      assert.match(await page.locator('#compare-converted-meta').textContent(), /^PNG · /);
+      assert.match(await page.locator('#compare-converted-meta').textContent(), /^WEBP · /);
       assert.match(await page.locator('#converted-preview').getAttribute('src'), /^blob:/);
       assert.equal(await page.locator('#converted-preview').getAttribute('draggable'), 'false');
       assert.equal(
@@ -236,21 +247,52 @@ const assert = require('node:assert/strict');
       await page.click('#platform-seventv');
       assert.equal(await page.locator('#zoom').inputValue(), '99');
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      await page.evaluate(() => (window.__delayNextRender = true));
       await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/animated.avif'));
+      await page.waitForFunction(
+        () =>
+          document.querySelector('#source-name').textContent === 'animated.avif' &&
+          !document.querySelector('#animated-canvas-preview').hidden &&
+          document.querySelector('#export-current').disabled,
+      );
+      const immediatePreviewURL = await page
+        .locator('#animated-canvas-preview')
+        .getAttribute('src');
       await page.waitForFunction(
         () =>
           !document.querySelector('#animation-section').hidden &&
           document.querySelector('#timeline-frames').getAttribute('aria-busy') === 'false',
       );
       await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
+      assert.equal(
+        await page.locator('#animated-canvas-preview').getAttribute('src'),
+        immediatePreviewURL,
+        'Finishing export preparation does not restart initial canvas playback',
+      );
+      assert.equal(
+        await page.locator('#animated-canvas-preview').getAttribute('data-frame-index'),
+        null,
+      );
       await page.click('#compare-toggle');
-      assert.match(await page.locator('#compare-converted-meta').textContent(), /^GIF · /);
+      assert.match(await page.locator('#compare-converted-meta').textContent(), /^WEBP · /);
       await page.waitForFunction(
         () =>
           !document.querySelector('#original-animated-preview').hidden &&
           document.querySelector('#original-animated-preview').src.startsWith('blob:'),
       );
+      const toolbarGeometry = async () =>
+        page.evaluate(() => {
+          const compare = document.querySelector('#compare-toggle').getBoundingClientRect(),
+            playback = document.querySelector('#editor-animation-toggle').getBoundingClientRect();
+          return {
+            compare: { x: compare.x, width: compare.width },
+            playback: { x: playback.x, width: playback.width },
+          };
+        });
+      const playingGeometry = await toolbarGeometry();
       await page.click('#editor-animation-toggle');
+      const pausedGeometry = await toolbarGeometry();
+      assert.deepEqual(pausedGeometry, playingGeometry);
       assert.equal(await page.locator('#converted-paused').isVisible(), true);
       await page.click('#editor-animation-toggle');
       assert.equal(await page.locator('#converted-preview').isVisible(), true);
