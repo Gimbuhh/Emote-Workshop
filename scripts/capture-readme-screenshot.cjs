@@ -20,7 +20,7 @@ const path = require('node:path');
       document.querySelector('.app-header').scrollIntoView();
     });
     await page.screenshot({
-      path: path.resolve('docs/images/emote-workshop-v1.2.png'),
+      path: path.resolve('docs/images/emote-workshop-v1.3.png'),
       animations: 'disabled',
     });
   } finally {

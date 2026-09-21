@@ -5,28 +5,30 @@ A private, browser-based emote editor for Twitch, Discord, and 7TV.
 ## How to use
 
 1. **[Open Emote Workshop](https://emotes.gimba.uk)** in Chrome or Edge.
-2. Import an image, animation, or MP4 — or choose **Try sample**.
+2. Import an image, animation, MP4, or 7TV emote link — or choose **Try sample**.
 3. Select Twitch, Discord, or 7TV and adjust the framing while checking the live previews.
 4. Use **Compare** to inspect the original beside the converted file, including its format and size.
 5. Enter a file name and export the current destination or every destination at once.
 
-Everything is processed on your device; no account or upload is required. For a fully offline copy, download and open **Emote Workshop.html** in Chrome or Edge.
+Media is processed on your device; no account or upload is required. For a fully offline local-file workflow, download and open **Emote Workshop.html** in Chrome or Edge. Importing from a 7TV link requires a connection to 7TV's media CDN.
 
-![Emote Workshop editing an emote for 7TV](docs/images/emote-workshop-v1.2.png)
+![Emote Workshop 1.3 editing an emote for 7TV](docs/images/emote-workshop-v1.3.png)
 
 ## What it makes
 
-Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), pick a destination, adjust framing, and export:
+Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), or paste a 7TV emote page/CDN link to import one of its 1x–4x renditions. The largest 4x AVIF is the default, with WebP, GIF, and PNG available when the emote provides them. Then pick a destination, adjust framing, and export:
 
 - **Twitch** manual-upload packs at 112×112, 56×56, and 28×28, with animated exports limited to 512 KB and 60 frames
 - **Discord** emoji at 128×128 and stickers at 320×320
-- **7TV** up to 1000×1000 and 7 MB, preserving aspect ratio without upscaling
+- **7TV** up to 1000×1000 and 7 MB, preserving aspect ratio without upscaling, with an AVIF-first export preference plus WebP and GIF choices
 
 The editor keeps separate framing for each destination, with undo/redo, drag or keyboard positioning, center snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, and brightness. **Keep canvas filled** can update Scale automatically while Width or Height changes.
 
-For animation, use the filmstrip to resize or drag the selected frame range, adjust playback speed, and preview the canvas independently from the chat example. Discord and Twitch clips are automatically kept within their five-second limit in either speed direction. Animated exports are GIF (Twitch/Discord emoji) or APNG (Discord stickers); static sources export as PNG.
+For animation, use the filmstrip to resize or drag the selected frame range, adjust playback speed, and preview the canvas independently from the chat example. The full selected duration is retained when the destination's file-size and frame-count limits allow it; longer animations are sampled progressively when needed instead of being cut off at five seconds. Twitch and Discord emoji animations export as GIF, Discord sticker animations export as APNG, and their static sources export as PNG.
 
-The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local, and the content security policy blocks application-initiated network connections. Following an explicit GitHub link leaves the offline editor.
+For 7TV, AVIF is the default preference, WebP and GIF can be selected directly, and the produced format is always shown before download. Current Chrome and Edge releases do not expose animated AVIF encoding to web applications, so animated AVIF requests automatically fall back to animated WebP and then GIF while preserving timing and transparency. Still-image AVIF is used when the browser can encode it; otherwise it follows the same fallback order.
+
+The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local. The content security policy permits downloads only from 7TV's media CDN when you explicitly import a 7TV link; local-file workflows remain fully offline. Following an explicit GitHub link leaves the offline editor.
 
 Choose **Try sample** to try it with the included sample artwork.
 

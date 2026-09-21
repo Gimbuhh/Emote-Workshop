@@ -71,6 +71,7 @@ const context = {
   Uint8Array,
   DataView,
   TextEncoder,
+  Blob,
   OffscreenCanvas: Canvas,
   async createImageBitmap(input) {
     if (input instanceof Blob) assert.equal(input.type, ''); // No MIME supplied: sniff contents.
@@ -101,11 +102,24 @@ for (const [name, bytes] of Object.entries(fixtures)) {
 const still = await load(new Blob([fixtures.still]));
 assert.equal(still.animated, false);
 assert.equal(still.frames, 1);
-const animation = await load(new Blob([fixtures.animated]));
+assert.equal(still.animationPreview, null);
+const progress = [];
+const animation = await load(new Blob([fixtures.animated]), (event) => progress.push(event));
 assert.equal(animation.animated, true);
 assert.equal(animation.originalFrames, 3);
+assert.equal(animation.animationPreview.type, 'image/avif');
+assert.equal(animation.animationPreview.size, fixtures.animated.byteLength);
 assert.deepEqual(Array.from(animation.frameDelays), [80, 160, 240]);
 assert.equal(animation.duration, 480);
+assert.deepEqual(
+  progress.map(({ phase, current, total }) => [phase, current, total]),
+  [
+    ['decode', 0, 3],
+    ['decode', 3, 3],
+    ['analyze', 0, 3],
+    ['analyze', 3, 3],
+  ],
+);
 assert.equal(bitmaps[0].closed, true, 'Replacing the source closes old frames');
 assert(mediaFrames.every((frame) => frame.closed));
 assert(decoders.every((decoder) => decoder.closed));
