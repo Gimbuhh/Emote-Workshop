@@ -19,7 +19,7 @@ The original PNG is not included in the checkout. Regenerate the embedded sample
 with `python scripts/optimize-sample.py <path-to-GlorpWitch.png>` using the pinned
 Pillow development dependency, then rebuild the offline edition.
 
-`docs/images/emote-workshop-v1.2.png` is a browser screenshot of the authored app using
+`docs/images/emote-workshop-v1.3.png` is a browser screenshot of the authored app using
 the bundled GlorpWitch sample. Regenerate it with `npm run docs:screenshot` after a
 material interface change. The sample artwork shown in the screenshot remains
 covered by the same permission described above.
