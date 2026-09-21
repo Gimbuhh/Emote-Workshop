@@ -309,9 +309,9 @@
     preview.hidden = true;
     $('editor-canvas').classList.remove('playback-hidden');
   }
-  function showSourcePlaybackPreview(file) {
+  function showSourcePlaybackPreview(blob) {
     clearSourcePlaybackPreview();
-    sourcePreviewURL = URL.createObjectURL(file);
+    sourcePreviewURL = URL.createObjectURL(blob);
     const preview = $('animated-canvas-preview');
     preview.src = sourcePreviewURL;
     preview.style.transform = `scale(${state().zoom / 100})`;
@@ -975,7 +975,10 @@
       setEnabled();
       if (source) {
         invalidate();
-        if (source.animated && importedFile) showSourcePlaybackPreview(file);
+        if (source.animated && importedFile) {
+          if (source.animationPreview) showSourcePlaybackPreview(source.animationPreview);
+          else applyPlayback('editor', true);
+        }
         buildTimeline();
         await renderPreview();
       } else {

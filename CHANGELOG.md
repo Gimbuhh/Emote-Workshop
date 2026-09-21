@@ -23,6 +23,10 @@ All notable changes to Emote Workshop are documented here. Per-version notes are
 - The canvas playback control keeps a fixed width so switching between **Play** and **Pause** no longer shifts the adjacent **Compare** button.
 - Discord stickers use filtered APNG delta frames so localized motion can remain at 320×320 with its full duration while fitting the 512 KB upload limit.
 
+### Security
+
+- Immediate animation previews now use media reconstructed by the decoding worker with a canonical, validated image type instead of assigning a URL derived directly from the selected file.
+
 Package version: `1.3.0`; Git tag: `v1.3`. [Release notes](release-notes/1.3.md).
 
 ## 1.2 - 2026-09-20

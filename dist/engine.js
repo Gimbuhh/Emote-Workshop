@@ -414,6 +414,7 @@ function imageWorker() {
         animated,
         bytes: file.size,
         preview,
+        animationPreview: animated ? new Blob([buffer], { type: details.mime }) : null,
         workingWidth: decoded[0].width,
         workingHeight: decoded[0].height,
         bounds: measured.preview,
