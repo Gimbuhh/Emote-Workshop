@@ -104,6 +104,7 @@ assert.equal(new URL(requested[0].url).hostname, 'cdn.syndication.twimg.com');
 assert(new URL(requested[0].url).searchParams.get('token'));
 assert.equal(requested[0].options.redirect, 'manual');
 assert.equal(requested[0].options.credentials, 'omit');
+assert.match(requested[0].options.headers['User-Agent'], /EmoteWorkshop/);
 const beforeInvalid = requested.length;
 for (const id of ['0', '', '../123', 'https://localhost/', '1'.repeat(21)]) {
   await assert.rejects(resolveTwitterMedia(id, '', { fetchImpl }), /Invalid/);

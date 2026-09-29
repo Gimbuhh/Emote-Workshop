@@ -58,7 +58,11 @@ export async function resolveTwitterMedia(id, index = '', { fetchImpl = fetch, s
     // Workers support manual redirects; non-2xx responses below are rejected.
     redirect: 'manual',
     credentials: 'omit',
-    headers: { Accept: 'application/json' },
+    // Twitter rejects requests without a User-Agent; Workers do not add one.
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'EmoteWorkshop (+https://emotes.gimba.uk)',
+    },
   });
   if (!response.ok) {
     await response.body?.cancel();
