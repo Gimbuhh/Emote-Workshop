@@ -2,6 +2,15 @@
 
 All notable changes to Emote Workshop are documented here. Per-version notes are preserved under `release-notes/`. Dates below follow the repository's version commits.
 
+## 1.4 - 2026-09-29
+
+### Added
+
+- **Import media** accepts public Twitter/X GIF and video post links in the local app started with `npm run dev`, resolving the best available MP4 for local editing and GIF export. Attachment suffixes select a specific item; unavailable posts show fallback guidance.
+- Direct `video.twimg.com` MP4 links can be imported in both the local app and standalone HTML file, with a 100 MB limit and download timeout.
+
+Package version: `1.4.0`; Git tag: `v1.4`. [Release notes](release-notes/1.4.md).
+
 ## 1.3 - 2026-09-21
 
 ### Added

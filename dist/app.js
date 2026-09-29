@@ -896,7 +896,7 @@
     if (source) renderPreview();
   }
   async function importImage(file) {
-    if (!file || importing || exporting || !engine) return;
+    if (!file || importing || exporting || linkImportBusy || !engine) return;
     importing = true;
     clearSourcePlaybackPreview();
     setCompareMode(false);
@@ -988,7 +988,7 @@
     }
   }
   const sevenTvIdPattern = /^(?:[a-f\d]{24}|[0-9A-HJKMNP-TV-Z]{26})$/i,
-    sevenTvDownloadTimeout = 30000;
+    linkDownloadTimeout = 30000;
   function sevenTvEmoteId(value) {
     let url;
     try {
@@ -1009,20 +1009,57 @@
   function openImportDialog() {
     if (importing || exporting || linkImportBusy || $('import-dialog').open) return;
     $('seventv-link').value = '';
-    $('link-import-status').textContent =
-      '4x AVIF is recommended. Format availability depends on the emote.';
+    $('twitter-link').value = '';
+    $('link-import-status').textContent = 'Choose a link to import.';
+    $('twitter-import-hint').textContent = localTwitterResolver()
+      ? 'Public post or video.twimg.com MP4 link. Imported as video; export as GIF.'
+      : 'Use a direct video.twimg.com MP4 link here. Public post links work in the local app.';
     $('link-import-status').classList.remove('error');
     $('import-dialog').showModal();
   }
   function setLinkImportBusy(value) {
     linkImportBusy = value;
-    $('seventv-link').disabled = value;
-    $('seventv-size').disabled = value;
-    $('seventv-format').disabled = value;
-    $('import-seventv').disabled = value;
-    $('browse-files').disabled = value;
+    for (const control of $('import-dialog').querySelectorAll('input, select, button'))
+      control.disabled = value;
+  }
+  async function importLink(label, download) {
+    const status = $('link-import-status');
+    setLinkImportBusy(true);
+    status.classList.remove('error');
+    const controller = new AbortController(),
+      timeout = setTimeout(() => controller.abort(), linkDownloadTimeout);
+    try {
+      const file = await download(controller.signal, status);
+      clearTimeout(timeout);
+      setLinkImportBusy(false);
+      $('import-dialog').close();
+      await importImage(file);
+    } catch (error) {
+      const detail =
+        error.name === 'AbortError'
+          ? `${label} took longer than 30 seconds to respond.`
+          : error instanceof TypeError
+            ? 'The media could not be downloaded. Check your connection or browse for a saved file.'
+            : error.message;
+      status.textContent = `Could not import that ${label}. ${detail}`;
+      status.classList.add('error');
+    } finally {
+      clearTimeout(timeout);
+      setLinkImportBusy(false);
+    }
+  }
+  async function downloadLinkFile(url, name, type, label, signal) {
+    const response = await fetch(url, {
+      signal,
+      credentials: 'omit',
+      redirect: 'error',
+      referrerPolicy: 'no-referrer',
+    });
+    if (!response.ok) throw new Error(`${label} returned ${response.status}.`);
+    return new File([await linkMediaBlob(response, label)], name, { type });
   }
   async function importSevenTvLink(value, requestedSize, requestedFormat) {
+    if (linkImportBusy || importing || exporting || !engine) return;
     const id = sevenTvEmoteId(value);
     if (!id) {
       $('link-import-status').textContent =
@@ -1039,35 +1076,127 @@
       },
       size = ['1', '2', '3', '4'].includes(requestedSize) ? requestedSize : '4',
       format = Object.hasOwn(formats, requestedFormat) ? requestedFormat : 'avif';
-    const status = $('link-import-status');
-    setLinkImportBusy(true);
-    status.textContent = `Downloading the ${size}x ${format.toUpperCase()}…`;
-    status.classList.remove('error');
-    const controller = new AbortController(),
-      timeout = setTimeout(() => controller.abort(), sevenTvDownloadTimeout);
+    await importLink('7TV emote', (signal, status) => {
+      status.textContent = `Downloading the ${size}x ${format.toUpperCase()}…`;
+      return downloadLinkFile(
+        `https://cdn.7tv.app/emote/${id}/${size}x.${format}`,
+        `7tv_${id}.${format}`,
+        formats[format],
+        '7TV emote',
+        signal,
+      );
+    });
+  }
+  function localTwitterResolver() {
+    return location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname);
+  }
+  function twitterMediaUrl(value) {
     try {
-      const response = await fetch(`https://cdn.7tv.app/emote/${id}/${size}x.${format}`, {
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error(`7TV returned ${response.status}.`);
-      const statedBytes = Number(response.headers.get('content-length') || 0);
-      if (statedBytes > 100 * 1024 * 1024) throw new Error('The 7TV emote is larger than 100 MB.');
-      const blob = await response.blob();
-      clearTimeout(timeout);
-      if (!blob.size || blob.size > 100 * 1024 * 1024)
-        throw new Error('The 7TV emote is empty or larger than 100 MB.');
-      const file = new File([blob], `7tv_${id}.${format}`, { type: formats[format] });
-      $('import-dialog').close();
-      await importImage(file);
-    } catch (error) {
-      const detail =
-        error.name === 'AbortError' ? '7TV took longer than 30 seconds to respond.' : error.message;
-      status.textContent = `Could not import that 7TV emote. ${detail}`;
-      status.classList.add('error');
-    } finally {
-      clearTimeout(timeout);
-      setLinkImportBusy(false);
+      const url = new URL(value);
+      if (
+        url.protocol === 'https:' &&
+        url.hostname === 'video.twimg.com' &&
+        !url.username &&
+        !url.password &&
+        !url.port &&
+        /^\/(?:tweet_video|ext_tw_video|amplify_video)\/.+\.mp4$/i.test(url.pathname)
+      ) {
+        url.hash = '';
+        return url.href;
+      }
+    } catch {}
+    return '';
+  }
+  function twitterPost(value) {
+    try {
+      const url = new URL(value.trim()),
+        host = url.hostname.replace(/^(?:www|mobile|m)\./, ''),
+        match = url.pathname.match(
+          /^\/(?:(?:[a-z0-9_]+|i\/web)\/status|i\/status|statuses)\/([1-9]\d{0,19})(?:\/(?:video|photo)\/([1-9]\d?))?\/?$/i,
+        );
+      if (
+        url.protocol === 'https:' &&
+        ['x.com', 'twitter.com'].includes(host) &&
+        !url.username &&
+        !url.password &&
+        !url.port &&
+        match
+      )
+        return { id: match[1], index: match[2] || '' };
+    } catch {}
+    return null;
+  }
+  async function linkMediaBlob(response, label) {
+    const limit = 100 * 1024 * 1024;
+    if (Number(response.headers.get('content-length')) > limit) {
+      await response.body?.cancel();
+      throw new Error(`The ${label} is larger than 100 MB.`);
     }
+    const reader = response.body.getReader(),
+      chunks = [];
+    let bytes = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > limit) {
+          await reader.cancel();
+          throw new Error(`The ${label} is larger than 100 MB.`);
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    if (!bytes) throw new Error(`The ${label} is empty.`);
+    return new Blob(chunks);
+  }
+  async function importTwitterLink(value) {
+    if (linkImportBusy || importing || exporting || !engine) return;
+    let mediaUrl = twitterMediaUrl(value.trim());
+    const post = twitterPost(value),
+      status = $('link-import-status');
+    status.classList.remove('error');
+    if (!mediaUrl && !post) {
+      status.textContent =
+        'Paste a valid x.com or twitter.com post link, or a video.twimg.com MP4 link.';
+      status.classList.add('error');
+      $('twitter-link').focus();
+      return;
+    }
+    if (post && !localTwitterResolver()) {
+      status.textContent =
+        'Post links need the local app: run npm run dev and open http://127.0.0.1:4173. You can also paste a direct video.twimg.com MP4 link here or browse for a saved MP4.';
+      status.classList.add('error');
+      return;
+    }
+    await importLink('Twitter/X media', async (signal, status) => {
+      if (post) {
+        status.textContent = 'Finding the Twitter/X GIF or video…';
+        const query = new URLSearchParams({ id: post.id, media: post.index }),
+          response = await fetch(`/api/twitter?${query}`, {
+            signal,
+            credentials: 'omit',
+            redirect: 'error',
+            headers: { 'X-Emote-Workshop-Import': 'twitter' },
+          });
+        if (!response.headers.get('content-type')?.includes('application/json')) {
+          throw new Error(
+            'The local Twitter/X helper is unavailable. Start this version with npm run dev.',
+          );
+        }
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `Twitter/X returned ${response.status}.`);
+        mediaUrl = twitterMediaUrl(data.mediaUrl);
+        if (!mediaUrl) throw new Error('Twitter/X did not provide a supported MP4 link.');
+      }
+      status.textContent = 'Downloading the Twitter/X animation…';
+      const name = post
+        ? `twitter_${post.id}${post.index ? `_${post.index}` : ''}.mp4`
+        : `twitter_${new URL(mediaUrl).pathname.split('/').pop()}`;
+      return downloadLinkFile(mediaUrl, name, 'video/mp4', 'Twitter/X media', signal);
+    });
   }
   for (const id of ['import-top', 'empty-import', 'replace'])
     $(id).addEventListener('click', openImportDialog);
@@ -1081,17 +1210,32 @@
   $('import-dialog').addEventListener('cancel', (event) => {
     if (linkImportBusy) event.preventDefault();
   });
-  $('import-dialog').addEventListener('close', () => setLinkImportBusy(false));
+  for (const [input, button] of [
+    ['seventv-link', 'import-seventv'],
+    ['twitter-link', 'import-twitter'],
+  ]) {
+    $(input).addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      if (!linkImportBusy) $('import-dialog').querySelector('form').requestSubmit($(button));
+    });
+  }
   $('import-dialog')
     .querySelector('form')
     .addEventListener('submit', (event) => {
-      if (event.submitter?.value === 'cancel') return;
+      if (event.submitter?.value === 'cancel') {
+        if (linkImportBusy) event.preventDefault();
+        return;
+      }
       event.preventDefault();
-      importSevenTvLink(
-        $('seventv-link').value,
-        $('seventv-size').value,
-        $('seventv-format').value,
-      );
+      if (event.submitter?.id === 'import-twitter') {
+        importTwitterLink($('twitter-link').value);
+      } else
+        importSevenTvLink(
+          $('seventv-link').value,
+          $('seventv-size').value,
+          $('seventv-format').value,
+        );
     });
   $('file-input').addEventListener('change', (e) => {
     importImage(e.target.files[0]);

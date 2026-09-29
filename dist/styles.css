@@ -1551,6 +1551,9 @@ input[type='color'] {
   color: var(--text);
   font-size: 14px;
 }
+.twitter-import-row {
+  grid-template-columns: minmax(0, 1fr);
+}
 .link-import-row input {
   grid-column: 1 / -1;
 }

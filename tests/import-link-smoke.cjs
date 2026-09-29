@@ -31,9 +31,20 @@ const avifFixture = readFileSync(path.resolve('tests/fixtures/still.avif')),
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       const requested = [];
+      let failure = '';
       await page.route('https://cdn.7tv.app/**', async (route) => {
         requested.push(route.request().url());
-        if (route.request().url().endsWith('.avif'))
+        if (failure === 'empty') await route.fulfill({ contentType: 'image/avif', body: '' });
+        else if (failure === 'oversize')
+          await route.fulfill({
+            contentType: 'image/avif',
+            body: avifFixture,
+            headers: { 'content-length': String(101 * 1024 * 1024) },
+          });
+        else if (failure === 'missing') await route.fulfill({ status: 404 });
+        else if (failure === 'blocked') await route.abort('failed');
+        else if (failure === 'timeout') return;
+        else if (route.request().url().endsWith('.avif'))
           await route.fulfill({ status: 200, contentType: 'image/avif', body: avifFixture });
         else if (route.request().url().endsWith('.gif'))
           await route.fulfill({ status: 200, contentType: 'image/gif', body: gifFixture });
@@ -67,8 +78,77 @@ const avifFixture = readFileSync(path.resolve('tests/fixtures/still.avif')),
       );
       assert.equal(requested.at(-1), 'https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/2x.gif');
       assert.equal(await page.locator('#import-dialog').isVisible(), false);
+      await page.waitForFunction(() => !document.querySelector('#replace').disabled);
+      await page.click('#replace');
+      await page.locator('#seventv-link').fill('https://7tv.app/emotes/01F6MQ33FG000FFJ97ZB8MWV52');
+      await page.locator('#seventv-format').selectOption('avif');
+      for (const scenario of ['empty', 'oversize', 'missing', 'blocked', 'timeout']) {
+        failure = scenario;
+        if (scenario === 'timeout')
+          await page.evaluate(() => {
+            window.testOriginalTimeout = window.setTimeout;
+            window.setTimeout = (callback, delay, ...args) =>
+              window.testOriginalTimeout(callback, delay === 30000 ? 500 : delay, ...args);
+          });
+        await page.click('#import-seventv');
+        if (scenario === 'timeout')
+          await page.evaluate(
+            (bytes) => {
+              if (!document.querySelector('#import-seventv').disabled)
+                throw new Error('Expected a pending link download');
+              const transfer = new DataTransfer();
+              transfer.items.add(
+                new File([new Uint8Array(bytes)], 'racing-paste.avif', { type: 'image/avif' }),
+              );
+              document.dispatchEvent(
+                new ClipboardEvent('paste', { clipboardData: transfer, bubbles: true }),
+              );
+              document.dispatchEvent(
+                new DragEvent('drop', { dataTransfer: transfer, bubbles: true }),
+              );
+              if (!document.querySelector('#loading').hidden)
+                throw new Error(
+                  'A concurrent clipboard or file import started during the download',
+                );
+            },
+            [...avifFixture],
+          );
+        await page.waitForFunction(
+          () =>
+            document.querySelector('#link-import-status').classList.contains('error') &&
+            !document.querySelector('#import-seventv').disabled,
+        );
+        assert.match(
+          await page.locator('#link-import-status').textContent(),
+          scenario === 'empty'
+            ? /empty/
+            : scenario === 'oversize'
+              ? /100 MB/
+              : scenario === 'missing'
+                ? /404/
+                : scenario === 'timeout'
+                  ? /30 seconds/
+                  : /connection/,
+        );
+        assert.match(await page.locator('#source-name').textContent(), /\.gif$/);
+        assert.equal(await page.locator('#browse-files').isEnabled(), true);
+        assert.equal(await page.locator('#import-twitter').isEnabled(), true);
+        if (scenario === 'timeout')
+          await page.evaluate(() => {
+            window.setTimeout = window.testOriginalTimeout;
+            delete window.testOriginalTimeout;
+          });
+      }
+      failure = '';
+      await page.press('#seventv-link', 'Enter');
+      await page.waitForFunction(() =>
+        document.querySelector('#source-name').textContent.endsWith('.avif'),
+      );
       assert.deepEqual(errors, []);
-      console.log(file, '7TV 4x AVIF default and size/format selection passed');
+      console.log(
+        file,
+        '7TV size/format selection, bounded downloads, timeout and error recovery passed',
+      );
       await page.close();
     }
   } finally {

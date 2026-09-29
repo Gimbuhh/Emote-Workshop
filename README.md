@@ -5,14 +5,18 @@ A private, browser-based emote editor for Twitch, Discord, and 7TV.
 ## How to use
 
 1. **[Open Emote Workshop](https://emotes.gimba.uk)** in Chrome or Edge.
-2. Import an image, animation, MP4, or 7TV emote link — or choose **Try sample**.
+2. Import an image, animation, MP4, 7TV emote link, or direct Twitter/X MP4 link — or choose **Try sample**.
 3. Select Twitch, Discord, or 7TV and adjust the framing while checking the live previews.
 4. Use **Compare** to inspect the original beside the converted file, including its format and size.
 5. Enter a file name and export the current destination or every destination at once.
 
-Media is processed on your device; no account or upload is required. For a fully offline local-file workflow, download and open **Emote Workshop.html** in Chrome or Edge. Importing from a 7TV link requires a connection to 7TV's media CDN.
+Media is processed on your device; no account or upload is required. For a fully offline local-file workflow, download and open **Emote Workshop.html** in Chrome or Edge. Link imports need an internet connection.
 
-![Emote Workshop 1.3 editing an emote for 7TV](docs/images/emote-workshop-v1.3.png)
+**Twitter/X post import:** Install the project's development dependencies with `npm ci`, run `npm run dev`, open `http://127.0.0.1:4173`, choose **Import media**, and paste a public `x.com` or `twitter.com` post into **Twitter/X GIF or video link**. Twitter serves GIFs as MP4; the editor imports the animation and can export it as GIF for Twitch or Discord emoji, or with the 7TV **GIF** export option. The importer prefers a GIF attachment, otherwise the first video, and picks its highest-quality available MP4. A `/video/N` or `/photo/N` suffix selects that attachment. Private, deleted, restricted, and some public posts do not expose downloadable media through public embeds. A direct `https://video.twimg.com/…mp4` link or saved MP4 is the fallback.
+
+Post links need the local server because Twitter's public embed endpoint blocks browser access from other sites. Direct MP4 links also work in **Emote Workshop.html**. Static hosting supports direct media links; public post links require a hosted resolver, which is not included in this release's static editor.
+
+![Emote Workshop 1.4 editing an emote for 7TV](docs/images/emote-workshop-v1.4.png)
 
 ## What it makes
 
@@ -28,7 +32,7 @@ For animation, use the filmstrip to resize or drag the selected frame range, adj
 
 For 7TV, AVIF is the default preference, WebP and GIF can be selected directly, and the produced format is always shown before download. Current Chrome and Edge releases do not expose animated AVIF encoding to web applications, so animated AVIF requests automatically fall back to animated WebP and then GIF while preserving timing and transparency. Still-image AVIF is used when the browser can encode it; otherwise it follows the same fallback order.
 
-The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local. The content security policy permits downloads only from 7TV's media CDN when you explicitly import a 7TV link; local-file workflows remain fully offline. Following an explicit GitHub link leaves the offline editor.
+The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local. The content security policy permits user-initiated media downloads from 7TV and Twitter's media CDNs and same-origin access to the local post resolver; local-file workflows remain fully offline. Following an explicit GitHub link leaves the offline editor.
 
 Choose **Try sample** to try it with the included sample artwork.
 
@@ -48,7 +52,7 @@ npm run test:gif:verify  # independent GIF verification (needs Python + Pillow)
 - `dist/` is authored source, not disposable build output — commit changes to it.
 - **Emote Workshop.html** is generated but intentionally committed; rebuild it whenever `dist/` changes.
 - `npm run format` formats; browser tests use an installed Chrome (`npx playwright install chrome`).
-- The GitHub Actions workflow runs these checks on pushes and pull requests.
+- The GitHub Actions workflow runs these checks and release metadata verification on pushes and pull requests.
 
 ## Project policies
 

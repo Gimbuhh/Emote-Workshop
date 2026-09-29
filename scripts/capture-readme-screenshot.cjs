@@ -1,6 +1,8 @@
 const launchBrowser = require('../tests/browser-launch.cjs');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
+const version = require('../package.json').version,
+  displayVersion = version.endsWith('.0') ? version.slice(0, -2) : version;
 
 (async () => {
   const browser = await launchBrowser();
@@ -20,7 +22,7 @@ const path = require('node:path');
       document.querySelector('.app-header').scrollIntoView();
     });
     await page.screenshot({
-      path: path.resolve('docs/images/emote-workshop-v1.3.png'),
+      path: path.resolve(`docs/images/emote-workshop-v${displayVersion}.png`),
       animations: 'disabled',
     });
   } finally {

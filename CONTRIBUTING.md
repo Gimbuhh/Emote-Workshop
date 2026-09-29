@@ -6,7 +6,7 @@ Thank you for helping improve Emote Workshop.
 
 - Use an existing issue or open a focused bug report for behavior changes.
 - Treat `dist/` as canonical source. `Emote Workshop.html` is generated and must not be edited by hand.
-- Keep media processing local. The only approved runtime network access is a user-initiated download from `cdn.7tv.app` when importing a 7TV link. Do not add telemetry, other runtime network requests, browser persistence, or runtime dependencies without prior discussion.
+- Keep media processing local. Approved runtime network access is user-initiated link import: downloads from `cdn.7tv.app` and `video.twimg.com`, plus public post metadata from `cdn.syndication.twimg.com` through the loopback-only development server. Do not add telemetry, other runtime network requests, browser persistence, or runtime dependencies without prior discussion.
 - Preserve the documented artwork permissions and third-party notices.
 
 ## Development

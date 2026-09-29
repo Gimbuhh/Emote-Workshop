@@ -10,7 +10,7 @@
     />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' data: blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; worker-src blob:; connect-src https://cdn.7tv.app; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self' data: blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; worker-src blob:; connect-src 'self' https://cdn.7tv.app https://video.twimg.com; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <title>Emote Workshop</title>
     <link rel="icon" type="image/png" href="assets/glorp-64.png" />
@@ -80,8 +80,8 @@
           href="https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Version 1.3 — view changelog on GitHub (opens in a new tab)"
-          >v1.3</a
+          aria-label="Version 1.4 — view changelog on GitHub (opens in a new tab)"
+          >v1.4</a
         >
       </div>
       <div class="header-actions">
@@ -462,7 +462,7 @@
                         ><span
                           ><svg aria-hidden="true"><use href="#i-plus" /></svg></span></span
                       ><strong>Import media</strong><span>Drop, paste, or click to browse</span
-                      ><small>Files or 7TV links · Up to 100 MB</small>
+                      ><small>Files, 7TV, or Twitter/X links · Up to 100 MB</small>
                     </button>
                   </div>
                 </figure>
@@ -783,11 +783,11 @@
       </div>
     </main>
     <dialog id="import-dialog" class="import-dialog" aria-labelledby="import-dialog-title">
-      <form method="dialog" class="import-dialog-card">
+      <form method="dialog" class="import-dialog-card" novalidate>
         <div class="import-dialog-heading">
           <div>
             <h2 id="import-dialog-title">Import media</h2>
-            <p>Choose a local file or paste a 7TV emote link.</p>
+            <p>Choose a local file or import from 7TV or Twitter/X.</p>
           </div>
           <button class="dialog-close" value="cancel" aria-label="Close import dialog">×</button>
         </div>
@@ -820,8 +820,26 @@
           </select>
           <button type="submit" id="import-seventv" class="button">Import emote</button>
         </div>
+        <p class="import-formats">4x AVIF is recommended. Availability depends on the emote.</p>
+        <div class="import-divider"><span>or</span></div>
+        <label for="twitter-link">Twitter/X GIF or video link</label>
+        <div class="link-import-row twitter-import-row">
+          <input
+            id="twitter-link"
+            type="url"
+            inputmode="url"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="https://x.com/…/status/…"
+            aria-describedby="twitter-import-hint"
+          />
+          <button type="submit" id="import-twitter" class="button">Import GIF / video</button>
+        </div>
+        <p id="twitter-import-hint" class="import-formats">
+          Public post or video.twimg.com MP4 link. Imported as video; export as GIF.
+        </p>
         <p id="link-import-status" class="link-import-status" role="status">
-          4x AVIF is recommended. Format availability depends on the emote.
+          Choose a link to import.
         </p>
       </form>
     </dialog>
