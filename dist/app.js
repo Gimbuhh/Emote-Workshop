@@ -1011,9 +1011,8 @@
     $('seventv-link').value = '';
     $('twitter-link').value = '';
     $('link-import-status').textContent = 'Choose a link to import.';
-    $('twitter-import-hint').textContent = localTwitterResolver()
-      ? 'Public post or video.twimg.com MP4 link. Imported as video; export as GIF.'
-      : 'Use a direct video.twimg.com MP4 link here. Public post links work in the local app.';
+    $('twitter-import-hint').textContent =
+      'Public post or video.twimg.com MP4 link. Imported as video; export as GIF.';
     $('link-import-status').classList.remove('error');
     $('import-dialog').showModal();
   }
@@ -1087,8 +1086,10 @@
       );
     });
   }
-  function localTwitterResolver() {
-    return location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname);
+  function twitterResolver() {
+    return location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname)
+      ? '/api/twitter'
+      : 'https://emotes.gimba.uk/api/twitter';
   }
   function twitterMediaUrl(value) {
     try {
@@ -1165,25 +1166,20 @@
       $('twitter-link').focus();
       return;
     }
-    if (post && !localTwitterResolver()) {
-      status.textContent =
-        'Post links need the local app: run npm run dev and open http://127.0.0.1:4173. You can also paste a direct video.twimg.com MP4 link here or browse for a saved MP4.';
-      status.classList.add('error');
-      return;
-    }
     await importLink('Twitter/X media', async (signal, status) => {
       if (post) {
         status.textContent = 'Finding the Twitter/X GIF or video…';
         const query = new URLSearchParams({ id: post.id, media: post.index }),
-          response = await fetch(`/api/twitter?${query}`, {
+          response = await fetch(`${twitterResolver()}?${query}`, {
             signal,
             credentials: 'omit',
             redirect: 'error',
+            referrerPolicy: 'no-referrer',
             headers: { 'X-Emote-Workshop-Import': 'twitter' },
           });
         if (!response.headers.get('content-type')?.includes('application/json')) {
           throw new Error(
-            'The local Twitter/X helper is unavailable. Start this version with npm run dev.',
+            'The Twitter/X import service is unavailable. Try again or use a direct MP4 link or saved file.',
           );
         }
         const data = await response.json();

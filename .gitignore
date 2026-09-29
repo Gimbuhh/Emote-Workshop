@@ -18,3 +18,4 @@ Thumbs.db
 *.tmp
 
 # dist/ is authored source. Emote Workshop.html is intentionally committed.
+dist/server/

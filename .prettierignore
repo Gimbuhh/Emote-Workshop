@@ -1,5 +1,6 @@
 Emote Workshop.html
 dist/vendor/
+dist/server/
 dist/sample.js
 package-lock.json
 tests/output/

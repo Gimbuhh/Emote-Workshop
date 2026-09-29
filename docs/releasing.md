@@ -15,4 +15,6 @@ Do not move or replace a published tag. Correct mistakes in a new patch release.
 
 ## Twitter/X import in 1.4
 
-The standalone HTML supports direct `video.twimg.com` MP4 links. Public post URLs use the local resolver started with `npm run dev`; static hosting alone does not enable post import. The resolver is written with web APIs so it can be reused in a future hosted route, but that deployment is separate from this release. Keep this distinction in release notes and verify both the standalone editor and local-server workflow before publishing.
+The website and standalone HTML resolve public post URLs through `https://emotes.gimba.uk/api/twitter`. Development with `npm run dev` uses the guarded local resolver. Direct `video.twimg.com` MP4 links bypass both resolvers. Verify post import from a local HTML file, the hosted website, and the local server, including unavailable-post recovery and animated GIF export.
+
+`npm run build` produces both `Emote Workshop.html` and the Worker entrypoint at `dist/server/index.js`. The hosted Worker serves the editor and a public, CORS-enabled metadata-only route; it embeds the authored assets so no runtime storage or additional bindings are required. Publish it through the existing Site identified by `.openai/hosting.json`, preserving the Site's access settings.

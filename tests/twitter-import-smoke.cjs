@@ -6,26 +6,28 @@ const { once } = require('node:events');
 
 (async () => {
   const { createWorkshopServer } = await import('../serve.mjs'),
+    { createWorkshopWorker } = await import('../site-worker.mjs'),
+    { default: assets } = await import('../dist/server/assets.mjs'),
     mediaUrl = 'https://video.twimg.com/tweet_video/test-animation.mp4',
     resolvedIds = [],
-    server = createWorkshopServer({
-      fetchImpl: async (url) => {
-        const id = new URL(url).searchParams.get('id');
-        resolvedIds.push(id);
-        return Response.json(
-          id === '2'
-            ? {}
-            : {
-                mediaDetails: [
-                  {
-                    type: 'animated_gif',
-                    video_info: { variants: [{ content_type: 'video/mp4', url: mediaUrl }] },
-                  },
-                ],
-              },
-        );
-      },
-    });
+    fetchImpl = async (url) => {
+      const id = new URL(url).searchParams.get('id');
+      resolvedIds.push(id);
+      return Response.json(
+        id === '2'
+          ? {}
+          : {
+              mediaDetails: [
+                {
+                  type: 'animated_gif',
+                  video_info: { variants: [{ content_type: 'video/mp4', url: mediaUrl }] },
+                },
+              ],
+            },
+      );
+    },
+    server = createWorkshopServer({ fetchImpl }),
+    hosted = createWorkshopWorker({ assets, fetchImpl });
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   const browser = await launchBrowser();
@@ -65,11 +67,23 @@ const { once } = require('node:events');
       pathToFileURL(path.resolve('dist/index.html')).href,
       pathToFileURL(path.resolve('Emote Workshop.html')).href,
       `http://127.0.0.1:${server.address().port}`,
+      'https://emotes.gimba.uk/',
     ]) {
       const page = await browser.newPage(),
         errors = [],
         requests = [];
       page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('https://emotes.gimba.uk/**', async (route) => {
+        const request = route.request(),
+          response = await hosted.fetch(
+            new Request(request.url(), { method: request.method(), headers: request.headers() }),
+          );
+        await route.fulfill({
+          status: response.status,
+          headers: Object.fromEntries(response.headers),
+          body: Buffer.from(await response.arrayBuffer()),
+        });
+      });
       await page.route('https://video.twimg.com/**', async (route) => {
         requests.push(route.request().url());
         const requested = route.request().url();
@@ -107,13 +121,6 @@ const { once } = require('node:events');
       await page.fill('#twitter-link', 'https://x.com/name/status/123?s=20');
       // Enter in Twitter's input must import Twitter rather than the first form button (7TV).
       await page.press('#twitter-link', 'Enter');
-      if (url.startsWith('file:')) {
-        await waitError();
-        assert.match(await page.locator('#link-import-status').textContent(), /npm run dev/);
-        assert.deepEqual(requests, []);
-        await page.fill('#twitter-link', mediaUrl);
-        await page.click('#import-twitter');
-      }
       await page.waitForFunction(() => !document.querySelector('#editor-canvas').hidden);
       assert.match(await page.locator('#source-name').textContent(), /^twitter_.*\.mp4$/);
       assert.match(await page.locator('#source-details').textContent(), /frames/);
@@ -145,7 +152,7 @@ const { once } = require('node:events');
         assert.equal(await page.locator('#import-seventv').isEnabled(), true);
         assert.match(await page.locator('#source-name').textContent(), /^twitter_.*\.mp4$/);
       }
-      if (!url.startsWith('file:')) {
+      {
         await page.fill('#twitter-link', 'https://mobile.twitter.com/name/status/2/video/1');
         await page.click('#import-twitter');
         await waitError();
