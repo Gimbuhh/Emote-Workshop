@@ -3,8 +3,11 @@ const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const { once } = require('node:events');
+const { execFileSync } = require('node:child_process');
 
 (async () => {
+  // Standalone browser checks must work in a fresh checkout, without prior test builds.
+  execFileSync(process.execPath, ['scripts/build-site.mjs']);
   const { createWorkshopServer } = await import('../serve.mjs'),
     { createWorkshopWorker } = await import('../site-worker.mjs'),
     { default: assets } = await import('../dist/server/assets.mjs'),
@@ -152,18 +155,16 @@ const { once } = require('node:events');
         assert.equal(await page.locator('#import-seventv').isEnabled(), true);
         assert.match(await page.locator('#source-name').textContent(), /^twitter_.*\.mp4$/);
       }
-      {
-        await page.fill('#twitter-link', 'https://mobile.twitter.com/name/status/2/video/1');
-        await page.click('#import-twitter');
-        await waitError();
-        assert.match(await page.locator('#link-import-status').textContent(), /No downloadable/);
-        await page.fill('#twitter-link', 'https://twitter.com/i/web/status/123/video/1');
-        await page.click('#import-twitter');
-        await page.waitForFunction(() => !document.querySelector('#import-dialog').open);
-        await page.waitForFunction(
-          () => document.querySelector('#source-name').textContent === 'twitter_123_1.mp4',
-        );
-      }
+      await page.fill('#twitter-link', 'https://mobile.twitter.com/name/status/2/video/1');
+      await page.click('#import-twitter');
+      await waitError();
+      assert.match(await page.locator('#link-import-status').textContent(), /No downloadable/);
+      await page.fill('#twitter-link', 'https://twitter.com/i/web/status/123/video/1');
+      await page.click('#import-twitter');
+      await page.waitForFunction(() => !document.querySelector('#import-dialog').open);
+      await page.waitForFunction(
+        () => document.querySelector('#source-name').textContent === 'twitter_123_1.mp4',
+      );
       assert.deepEqual(errors, []);
       await page.setViewportSize({ width: 375, height: 812 });
       await page.waitForFunction(() => !document.querySelector('#replace').disabled);

@@ -11,6 +11,8 @@ All notable changes to Emote Workshop are documented here. Per-version notes are
 
 Package version: `1.4.0`; Git tag: `v1.4`. [Release notes](release-notes/1.4.md).
 
+The updated 1.4 HTML and hosted editor use the [published source revision c3c1ffa](https://github.com/Gimbuhh/Emote-Workshop/tree/c3c1ffa26520147167f7cde034392e1d3086a4d2). The original `v1.4` tag and its source archives retain the initial local-server implementation.
+
 ## 1.3 - 2026-09-21
 
 ### Added

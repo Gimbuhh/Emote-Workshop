@@ -5,7 +5,7 @@ Thank you for helping improve Emote Workshop.
 ## Before opening a change
 
 - Use an existing issue or open a focused bug report for behavior changes.
-- Treat `dist/` as canonical source. `Emote Workshop.html` is generated and must not be edited by hand.
+- Treat the editor files in `dist/` as canonical source. `dist/server/` is generated and ignored; `Emote Workshop.html` is generated and intentionally committed. Do not edit either generated output by hand.
 - Keep media processing local. Approved runtime network access is user-initiated link import: downloads from `cdn.7tv.app` and `video.twimg.com`, plus public post metadata from `cdn.syndication.twimg.com` through the hosted `emotes.gimba.uk/api/twitter` resolver or loopback-only development server. The resolver accepts numeric post IDs and returns a supported media URL; it never proxies media or fetches a user-provided URL. Do not add telemetry, other runtime network requests, browser persistence, or runtime dependencies without prior discussion.
 - Preserve the documented artwork permissions and third-party notices.
 
@@ -21,7 +21,7 @@ npm test
 npm run test:gif:verify
 ```
 
-Include focused tests for changed behavior. When `dist/` changes, run `npm run build` and commit the deterministically regenerated `Emote Workshop.html`.
+Include focused tests for changed behavior. When authored editor files change, run `npm run build` and commit the deterministically regenerated `Emote Workshop.html`. Changes to `site-worker.mjs` or `twitter-import.mjs` require rebuilding the hosted Worker; keep its generated `dist/server/` output ignored.
 
 ## Pull requests
 

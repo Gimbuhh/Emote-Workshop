@@ -8,7 +8,7 @@ Describe the user-visible problem and the chosen behavior.
 - [ ] `npm run check` passes.
 - [ ] `npm test` passes when application behavior changes.
 - [ ] `npm run test:gif:verify` passes when GIF output changes.
-- [ ] `Emote Workshop.html` was regenerated when `dist/` changed.
+- [ ] `npm run build` was run for editor or hosted resolver changes; changed `Emote Workshop.html` is committed and generated `dist/server/` is ignored.
 
 ## Privacy and release impact
 

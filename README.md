@@ -1,6 +1,6 @@
 # Emote Workshop
 
-A private, browser-based emote editor for Twitch, Discord, and 7TV.
+A browser-based emote editor for Twitch, Discord, and 7TV.
 
 ## How to use
 
@@ -10,7 +10,7 @@ A private, browser-based emote editor for Twitch, Discord, and 7TV.
 4. Use **Compare** to inspect the original beside the converted file, including its format and size.
 5. Enter a file name and export the current destination or every destination at once.
 
-Media is processed on your device; no account or upload is required. For a fully offline local-file workflow, download and open **Emote Workshop.html** in Chrome or Edge. Link imports need an internet connection.
+Media is processed on your device; no account or upload is required. For a fully offline local-file workflow, [download the standalone HTML](https://github.com/Gimbuhh/Emote-Workshop/releases/latest/download/Emote.Workshop.html) and open it in Chrome or Edge. Link imports need an internet connection.
 
 **Twitter/X post import:** Choose **Import media** and paste a public `x.com` or `twitter.com` post into **Twitter/X GIF or video link**. This works on the website and in **Emote Workshop.html**, without installing or running a local server. Twitter serves GIFs as MP4; the editor imports the animation and can export it as GIF for Twitch or Discord emoji, or with the 7TV **GIF** export option. The importer prefers a GIF attachment, otherwise the first video, and picks its highest-quality available MP4. A `/video/N` or `/photo/N` suffix selects that attachment. Private, deleted, restricted, and some public posts do not expose downloadable media through public embeds. A direct `https://video.twimg.com/…mp4` link or saved MP4 is the fallback.
 
@@ -43,14 +43,15 @@ Requirements: Node.js 22+, and for the independent GIF verification Python 3.12+
 ```text
 npm ci
 npm run dev        # optional local server at http://127.0.0.1:4173
-npm run build      # rebuild Emote Workshop.html after editing dist/
+npm run build      # rebuild the standalone HTML and hosted Worker
 npm run check      # syntax, formatting, offline-build freshness
 npm test           # full test suite
 npm run test:gif:verify  # independent GIF verification (needs Python + Pillow)
 ```
 
-- `dist/` is authored source, not disposable build output — commit changes to it.
-- **Emote Workshop.html** is generated but intentionally committed; rebuild it whenever `dist/` changes.
+- `dist/` contains authored editor source, except for generated `dist/server/` — commit source changes and leave `dist/server/` ignored.
+- **Emote Workshop.html** is generated but intentionally committed; rebuild it whenever the authored editor changes.
+- `site-worker.mjs` is the hosted entrypoint source, and `twitter-import.mjs` resolves public post metadata for both hosted and development imports. `npm run build` generates the deployable Worker under `dist/server/` without adding runtime dependencies.
 - `npm run format` formats; browser tests use an installed Chrome (`npx playwright install chrome`).
 - The GitHub Actions workflow runs these checks and release metadata verification on pushes and pull requests.
 
