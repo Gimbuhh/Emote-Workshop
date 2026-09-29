@@ -10,7 +10,7 @@
     />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' data: blob:; script-src 'self' 'sha256-rMfkFFWoB2W1/Zx+4bgHim0WC7vKRVrq6FTeZclH1Z4=' 'sha256-QDEu976uHXmuUNjpJG0ZyUIsa50AxX5Ivav+vBiUi6I=' 'sha256-Pc8ubgxDLtr3EdcaYfrZ3NiIRqbHMjdTJYMmV7fGxhA=' 'sha256-mQKeVIWDYz2pR3ELdWA/q02aEd/QEa4qENVYlVD3wHs='; style-src 'self' 'sha256-E3OvFsm5ZfTMG57NiJBbXet5yyvQb69kELFOP/+Qx8A='; img-src 'self' data: blob:; worker-src blob:; connect-src https://cdn.7tv.app; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self' data: blob:; script-src 'self' 'sha256-rMfkFFWoB2W1/Zx+4bgHim0WC7vKRVrq6FTeZclH1Z4=' 'sha256-QDEu976uHXmuUNjpJG0ZyUIsa50AxX5Ivav+vBiUi6I=' 'sha256-Pc8ubgxDLtr3EdcaYfrZ3NiIRqbHMjdTJYMmV7fGxhA=' 'sha256-ErkzKBhs9bfFETFX0EgbL4sPJFd39lW6/MF9k5zsKO8='; style-src 'self' 'sha256-gIZLh6Mmpedi5duqEkDSqLjP1Ua5m6qKM0DH1k5YcPo='; img-src 'self' data: blob:; worker-src blob:; connect-src 'self' https://cdn.7tv.app https://video.twimg.com https://emotes.gimba.uk; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <title>Emote Workshop</title>
     <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAW/0lEQVR42u2ae6xtV3Xef2POuR577/M+5z7BD7gYBy4Y1yTYvBRTEiDNQ61SXymVAUWqaNOGKopbtVX+OL5KCa0orUqKVJKKP0jUSNcRBEKgaVGEQ6AhBQf8irENfvv6Ps459zz23mutOecY/WPte+1SwL63JgLF8+ieve/ee62z11jf+MY3vjHhhfXCemG9sF5Yz+8yM8GQSzsYMTMnIpiZ+2G8fnk6EOvubyQC/uIvPnGZmYVvD8izwEYAPvCBW0a3f/3jH/rfD/3Rn37x3j/60C23fGB0Uee5yOWeP9gj6+vr5Wf+57/7zyebe7/x+Ts/8vk77/vMNYCtrz87EozbHMD173jjrxy5aum9qyvy5sXF+h8fOeIPAKyvr//gBuDEiZu8CHb9awev62Tnnz619eBgmp5448TO/Obdd99d3nrrrfZs57jttv7R53J3fGaX6XQnN2n3rlOntp8SgePHj9sPMAJuAmBufmFJUZzr8rntMxrj3o8+ev9XLhORZ0XBsWPHdH193b3x2p/50PbW5CNlNefv/9Y3f+348eMT1XUH/OAG4KabjinA+HH/1cLNPV4Oaj8YLIhkd8dSGj5pZvIc7qDdeOONDiA5+QITZS4tbn+/+ep5CUBfsUx+6p3/6GSXui+GqmC+npeiG3zpDceOTW+77bbndAdvvPGMAaTOXe1DS3B5vk+Po/IDHYB+3SoAO3sbuyLGpEm7ISz8AcA999zznOB72wVCbBcjiYml+EOBgH4dN8NkMBhcXlWOqO3XXvvav/+/AI4fP67PjUluMoAsccGVBfPzo6UfmgCIYLeuf95Xw3IZAoNiUNnduXxOqvFpFAFQBz8/cAVLw/lVgH379v0wpAAcPXqjDYcL2TJktavvsE8cMTM5ceKEX19fd2bmzMz1z094s3UnItZLXhM4boDURbkSxONSePH3GwHh+TzZ1ue+6g78k7o4N00UCyxmm75ZRP7KDD12DDt+/PjTCTN7ur6+7kRkliLm3ve+31htc3xREzucHxztyfFG/YEOwIkTJ/xNN92kH/7wB1a7tjxs2dGNO8KKe89//8RHP/vZ393dvu9r169Wo+HBaE3T7uzurKwsvqwYzv1CN02HfvYnf/Lf3P7lL39FRKaf/h+/t4ZOrxiPz1EPF6+9+eZbRs658YkTJ/yxY8fy961xudTjzQwRMYDbv/TJX7HBY//x8TN3WeGG8oqXvonFcMVDhZRjV8oBRZeRmNqu7QblcGE0HJKSMt7tWqy8Z2dv61OTbrLnh49/oMsbrM5fJ088xL/48Te/5d/P+MLdeuutz5lUv/8IEExE+OM/PvHaucX5d68cHvzCyY1vIeIxMbYnG7Z06PBLpl2D2RRDMSN01tU747OWd7KKeKnLQTW/MH/d/tXyuvEenNqK1qZEcpu8+PIj7//KV778mnv+8s7fEJG/eiZxng/8X3cABLATH/zg4MOf+pS97W3XvHS0Ft535VWH3747fYrtyRmcR9QyTdyQh0/eoeICWSciYuebPpxzAubFeaa5sL3kLYizIKVv8460qePc+FH2zQ/CFUdecnNVv/pNn/vcZ/7r/Xfe93si8q3nKxCXlALvfveP12//iX/w1rm14U9PwsblBw+v/p3l1SWb7p2Rx568S2KeYuZYXlqhCDWxSzifMc0YDuc8mOKLQPCB0lWIOdQMVUh5Qs6RoihZGh6kLtZ0Ye6Qszjk3Eb3jY3TWx+98+7HPvbLv/yLT50PxKUG4aIR8P5/9UvLh1965RsHq+Ht9Zr+/GCu2p90086ePusm7TadJhRFLDFpdpkbOKZtg/cZwVDrA2BquBSpQoEE66ugODIZTBGBrJAsEW3XbY4brcMCqwcOXV1Vy7++sDj6sS984fO33XffA58Tkc1ZELjYpslfDFJOnLjJnz4zd+SqVx55++KLBn8vhp1DXdoQjbvStbvsttvE3GCqqBmmStZMypEYG5J25Kw4AcRQSxiKaiamjpg7skXQ2TVk6S9HlJSmomkqXdzTqi5CPRi8sq7LawbDuaVrX3Pd/TfccMPO9yUFzEzEOTNV+eh/+bfXLK+tvm7xSP2Lfti9vp1u2rTbkDaO0dyRLdN0ES8BNcEZhOBRS8QuUpQlwXnKsrjwl70vKHx5IVhOHMEXFK7ATHA+UBUlXhylKynKEaVfttItUJZDmYzduZ1z+bbTZ7Y/vnl68wvvete7xud56nlJgVlule869rMH33DDDS+tlsNPSDG5Nuk2TdwhdhPabkzOiZSVNiZCUKqiJmmia1tEQM1oJxMK71AZkrPinaOuHF4U7x1ZM2YKYhhKBnJUzBLePBqUTEa9Sg4TshtZNVhaWgn1u4bF8hW+SR74LKD/vxxwPoLFb//2f3jH0Ve86u+u7t93hSsJ43T65dvdQ8W0bUi5kZRaco7EFOk6BRFySmSX8M6DM2KMaDayZXLM+JQwVZIJLgY8Hu/LPlCq5JwRJ6gJqoAa4iBJRNRwsgMa8eokObNQzVdhcf764aH65o9+7KPdn//ZI1/8rd86Prn0FDAEQf7g0x/511cf/ZFb1lZXll3IJO3Y2H2KUxsPs7H7GG2zQ4oNXWpoY0eMRggF3ge8L3DO4auCrmuZThqyJkofGM2NOM9WpS8Y+IqqrjAzYhcRgVCWiPQtgveBygXECyUFpff4UFOEOaqqxvuR4dZwhBin/uSZ09PffXjj7Iff+VM/f/LZ0iF8x5wXsVtuvnnf0v7Bz+nc5vK9T9yV2nbs2rahi3uilqRNe3TdlJQyOSdiyuSsqCpVJThxJDXEBQrnmZgSo4EYtQml96gZIETLVBhmoCLgBFEFjCKUeC9kFVxyqHeoeUShSxFToa6CuGpCRMpirrpiXu0fXq5rfwKcXF9f/55u1HflgKPXv+rAuN2cGz/xiO3ubbiU1HVtxDifpx0pZ2KM5KyIeUJwaFZSSiCClwLU8IXDOYdZpm0j06Kjmp/DuoiKkckkzZgKCaP0RX/PTGdwdGRNF0qoQzBRPBk1SKpIntB0UxuPxxaK0X4/t3wt8Ce33vp043VRAQg23Mu5SxqnEnNr09gxbVrMFB88jgiWyaYoRvCeEMIMcYLzBV483jvEgXeerA0xJYq2IY4GKIplQ5zHVHGuwJkiCMF5zJScleT6R8sR5/pgigbEKeIMtYzGhrbblabbtYBIyvXgkvyAmZjgz/7Z3Y/vjscPNtPIZLxH2zaE4PBFIMZE03W0MRI1kTGyWc/s3lNXA8pQ4pynH3Fp/6URkipZlaaZomr9/7Oiajjn8SEQnKcqKpwEYja6mGm6jiZ2ZFOyJmJOZMvo7CdbooudpaQupeIRy9Udl2qIGMBH7CNpaeHAOOdAF1XapmPaTMkp4XolQ8yZnBQRhwSH8x4zmE4bppMpXUy0bUeMGe99T5DOk9WYdh1t15FmFaHrIjklCt/L4+AKRDw5QRsTXdeTqImRcqLLkaixV50ihMIRQkFRDgmMvrG7Yd+YuUx20Y7QeSIcycI3Sz9kGpM0bUfO1iu22JI1YlkxM0x7+ZpQxl1Do1NaWjqNJFGiKjFnitJRlwWmymTc0rQRS6Dq6DQTc8IhOEAtgSl1XeKDJ4SSelCBZDptyZrImnvtkDKSlKKoKKsRp05vPPqx3/z4mWci+iI54FYB7IknT35eVuOOwUIXo3nvBYGc+rrfw8XoUoY2krKQNeK9MNkTTp98knNb26SUcAGWl5fYt2+BpZU5utQBmWHdE15KSvSJMvcoQAznBO88gme367j76w/wxMmzbJzb4fDh/bz1Ta9juDTAREGNwgeiCN10MnfNNYcPfupT7F2iEOrLxsN/+fC9K9f7b5WD8trxRCzlLE4ENSOZgYJqnpUzyNpHe+dcx5f+9EHuv/sUlqCoAqOFCuMka/tGHL32Sg5dtogbeFLMRDowoS4rwFBVuuSIyTCXkeC4+4Fv8sk//ALntqccvfYo9z5wkvnRPfzc3z6AiaFmOAMvBXPDpbiyovOzEqgXHQARTIDu/Ssb+t+2v1wsV9d653rGz6A5g/V1G5FZbgsClGXFypLnTW+qGdUj7r/vCcyEa3701XzrgQd5/NGztLnhx6qruOLyfcSUEBPUlGLqKYuAqL+ACnPKdNJx553302W46hVXsbszRmaB8T7gQgADL8LC/AJ6cHDl1imO3H33ow8Au5fUDZohbzl+u73jba+/Opfxba1OTC1LynEmQAxwiDiKsmBYD6jLguGgZnFxyIsvW+WV11zBlS87QD0q2draRLxQhMDy2oiFxYrhsMADmo0UEzlF/IxgwdCc+1xPiSdOnqWNRtt17O3u8Iqrr+CG617DwmBIypmcM4YwGCxJN622t85O7ywW/Maxyy7b+fRXv6oXrQPOc8fZzbOuGoAVXtQ6uq4j50SQgHNgqpj1vX7wAcThQyCmBsHx8iMHOPKSVSbTlnPbe2xu7LC9O8EFR9e17GWjLpXgHIIxaRqKEPDBY85oJw05G29+/XW8+jUTkmbqMrC2uMzSaMS5vU1Eoa6GjGSRQewY1ksHD+9fu9q68SN3zc8/AcRL6QbtxE0n/F3+M/uSNeQcLeckOSs5gRIJRcDNylrbdZjPmGXUFOcF1Yyjb4l9CKws10CD0qFSkHMkWaalIwIpe7xzBO9xoaAqKsqypG0TC6Oa1dU5MEEtk5MxnmxiliiLEglGiKV0KbI0Gq3t2z+44vSpMwcPHTq0Aowvsgz2TdId9R8umXUvyxJn5S8RY6LrIk3X0aW+DGXLxBxpY6RpWnZ2d5lOGpx4qrJkWA+oyiHiCurBHIuLI0pvOKCLkZ2dMTs7u+ztjtnd3WNne4fx3php02AGw+GQuqwofUUxE0poxsh9t6mRJrW0qaXLDZlOhlWYGwzmZDgcrp04ccJfkh+Qi1g104ai6VBrJeVEigk1QZzDzMhqmBiiggJOFO97Yoya8cnhneGLXtf35CmAzgRQJrUdpkaOsb8wVYIPvW0mgYXFAu/6PsMkE4JAXZCio0sNGUVzZKA6U54Wx7vjhzbPnHr87NndvVOnTtnFVgEAtk9Ll1bG5wZtJAQlZSPrTCqa4QScc7MSZH1jo0rKQspTpl3XS2CRXj2a0bYdXdOhqpj2HBJjhCwEFTqL1D7Sti1zoxEpd4wnY0JV9qIHSBlUjay5ryI+ULq+BfdugHPBS6kHF5ZXX7Iz3dvaPjtx380k+Z4I2DqbNLTdrrSRgfMYQrZeoBTe485Hyvo6LL2KxMx6ZkeR4MBAUyaljKVE1ySEPjApZZpJwjJkp2hVIDamaTt2dvaoqprVfauUgwHihJwzKSkihi88vigAhyPMgu3BmQzmq6sPHFjb2t3beuqTv//7d15sChjANtvMp7xTZ0uq6vN56TuDsSkk9AJpxDSbXLne4XXWW1qYzfp7MBxlWZJinhmkHnEF7bRlbzJlblihVlIkpUuZeedQhJgiRVHgvQeElCNqvaeY1TBziASk1yu5bZunps3krtK5r91+++3puxkj3xMBIbdlld0Zr7Znqks5Z0NE1Hr5680wyzgRnHd9+y6Co3dystJ3ejPhxCwN6GdE5NwHpaqKPlC5/3yORjUMFNWAUFac3y6ZUqYsA4NBRdaSmDLOCcF7Cl/gXWneBYndtDuzsXv/1tbmgymls5dqispoyF6a6KNxmk5LLUtGb2565zCDruuJDAHv+24Q6dkdzwzmrvcE6Emw6ZTUJkx7f1Cz4p0nFA6yQztl0nRIUVDWVX/hOTGeTAiuQLXvLJ2v0NjiVCmrAnEB1SxNM7XClbkcFEvV3PxwZ3PHXepcQO595JHu4ML+LqxxVEb+VYITO29dqZBSIuXU9wZZZ/fV+lx0ghdHCA6k9wu6LtE1kdSlntG1tyWzKjmDqWBAjn0q+SKA95hwofMDoSwHmAS6mPtq1IcaHwqqsGIp+faxJx+7/46v3PuJybndk7fffrtdkhACRJz3jN2DeWJbbk6WZzwnarMvNOMDJ2B5Bm0xEPqW2ax3eNVIKZNyns0GA6YZVSVGRRVCCOSUSWookLIxnjR0KVHXJXNzC3hfk80jyEwxyqwnKSiKglAGcVoUVV2++PDlB6967zt/6d5vc7ovbi5Qzc9lt+2+Hhf3HnAje53D9Z3SzIjoL6bfG50QRI2cEy4rXqRHQ5ZZmhRQOjSl3ku48CNozjQ50zQdGiMueGTSUppRW/+ZUHTYrFPL2s8WvYCYoyoHlPUCFrxMJk0uy7Cytjr31t+57Xe2Kqu+fOzYseY7BeHZtsjYdGrjk49uPbi1PX6k62YNkAnO+56RpW9eBHof3+SCu6szfxDXMzS+J0sFYs50KdGmzLSLTKYtTdv1F1VWRBWmbUfbRpIKrnD4OuDKQHaKeHehI/WhpC5HzNdrLNZLLA3nhwtzC8vDYXUQjVc8+ug9o+9mjT8rArruTKc75c6grc6UUuCD9W1q7vc3i/M9u/fjvgv7ni0rJgZ4hJk20AwZVCGbkPGkHAEjVOHCkMIXRd8PeEFCX+t9UeJD0adMl3Clx2M4KamKIYNqQE1NoSXBm5+q93nS8uRjDz3+L//5r599Znm/qACktNWc3VjbKSftN1PnY6itSJqM7HrGcoJJn+N6XormXrEJgJs9kz4ITl1fKr3DiyAOitxXFcN6+YvrNX9ZUAxKhotD6rqeuc4OU0NT7E3UwlP6gsI5sIaYdwhWUbhi4K1yhRsc/LVbbnlJmJt75DuZI88agKWlWtO+MF8WzOcUNbaCpqcNEVNBpP/yiswmu9aHeiabnetLpPMeF4wQHGaBbAmN/QU9MznFO4IP1IOaejhgMKwpfSCUDnFK2zZY9viqwvl+fpBSRww7YBFx89TD0cLa6srfOru89ujDDz9214eOf1AvaTzu9//I8EWjucP7Xj64qVrm1Tlm02wSZxMhVb1AZKY9vHu466xZ6ud9aiBmfdk6P/0J/dwABCk8oSz6f1VBGBQMRgOKEGa2eo+OnCOmmSIIZVFQh5LSVb2WEMHhUcC7INr4vb299uzO9uTxAwcOPHbvvfembx8HPhsC5MhStbK8Njxaz+8eTUHRzlA1pG/sUNP+LltPemb93oAZpsEyMRmQcN5RlL6fuhYFoQiztOnd236PhPR7BrIR25ZM2xNsVVBXNU4MioATwc8aLSyBJVQziYSXiEpLWQ/2v/jQoWu7SbfhnDsD/LnNBp/PSQkCRpeHxVL3hlTock7Z5Dz52jNIL9tMpPRYYGaSGr1AUrVe5MRM02V6AER88IgTyrJHgnOCiCPFiPNC5yJF8BTBIWLUVUkZPHUIvVtsvSnbMSUkAREKlIHzqM+EmmK4EA7uP7z2spOnTo36NkXsmVT4vcqgvec97ymWX7RwmMXudVKxH+/ExAQRcYI4JyJOxEQFMUFMRBDxIuJN6B1twZuIFzExSTlKTFHa2EnTNDJtWplMOplMGpmMpzIeTySmJKomYOK8E+e9FEUQ50Wc9xJCkKJ0Ik5EUcF5KYuhVNVIqnogdVVKWXqpRyLzK35lYWGwcmjtRVf+6q+ur83IVp5TChzaOiTnrt67bG80WWut24mxw2LGIueznmy9slPTXhw5h3npIaKzhkfB1GazTrmAjmzWGyC5P04wyqLAVQ7Nhjkhq1HM+oiedA3NimYFDyEMqMtFhqM1BuUKhfOUZZj9nWAiyOLK0uJlV4arzpzbOgScvagtMu/9T++oNjc3qw1g9fyLm5tsAKyswObm/3vQyvnPfbezrvxfb24+87CVlQuvrz7jXCuszN5aZWX2xsoKrK68jBVWYGW1f5z9ZhXYgE02OX0mWXwqRiC95S1vSbywLn6foDytbP6alz2Xl+w5bOe/+C10fyPW/wFxU7DYYl5jswAAAABJRU5ErkJggg==" />
@@ -1567,6 +1567,9 @@ input[type='color'] {
   color: var(--text);
   font-size: 14px;
 }
+.twitter-import-row {
+  grid-template-columns: minmax(0, 1fr);
+}
 .link-import-row input {
   grid-column: 1 / -1;
 }
@@ -1917,8 +1920,8 @@ input[type='color'] {
           href="https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Version 1.3 — view changelog on GitHub (opens in a new tab)"
-          >v1.3</a
+          aria-label="Version 1.4 — view changelog on GitHub (opens in a new tab)"
+          >v1.4</a
         >
       </div>
       <div class="header-actions">
@@ -2299,7 +2302,7 @@ input[type='color'] {
                         ><span
                           ><svg aria-hidden="true"><use href="#i-plus" /></svg></span></span
                       ><strong>Import media</strong><span>Drop, paste, or click to browse</span
-                      ><small>Files or 7TV links · Up to 100 MB</small>
+                      ><small>Files, 7TV, or Twitter/X links · Up to 100 MB</small>
                     </button>
                   </div>
                 </figure>
@@ -2620,11 +2623,11 @@ input[type='color'] {
       </div>
     </main>
     <dialog id="import-dialog" class="import-dialog" aria-labelledby="import-dialog-title">
-      <form method="dialog" class="import-dialog-card">
+      <form method="dialog" class="import-dialog-card" novalidate>
         <div class="import-dialog-heading">
           <div>
             <h2 id="import-dialog-title">Import media</h2>
-            <p>Choose a local file or paste a 7TV emote link.</p>
+            <p>Choose a local file or import from 7TV or Twitter/X.</p>
           </div>
           <button class="dialog-close" value="cancel" aria-label="Close import dialog">×</button>
         </div>
@@ -2657,8 +2660,26 @@ input[type='color'] {
           </select>
           <button type="submit" id="import-seventv" class="button">Import emote</button>
         </div>
+        <p class="import-formats">4x AVIF is recommended. Availability depends on the emote.</p>
+        <div class="import-divider"><span>or</span></div>
+        <label for="twitter-link">Twitter/X GIF or video link</label>
+        <div class="link-import-row twitter-import-row">
+          <input
+            id="twitter-link"
+            type="url"
+            inputmode="url"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="https://x.com/…/status/…"
+            aria-describedby="twitter-import-hint"
+          />
+          <button type="submit" id="import-twitter" class="button">Import GIF / video</button>
+        </div>
+        <p id="twitter-import-hint" class="import-formats">
+          Public post or video.twimg.com MP4 link. Imported as video; export as GIF.
+        </p>
         <p id="link-import-status" class="link-import-status" role="status">
-          4x AVIF is recommended. Format availability depends on the emote.
+          Choose a link to import.
         </p>
       </form>
     </dialog>
@@ -5118,7 +5139,7 @@ window.drawArtwork = drawArtwork;
     if (source) renderPreview();
   }
   async function importImage(file) {
-    if (!file || importing || exporting || !engine) return;
+    if (!file || importing || exporting || linkImportBusy || !engine) return;
     importing = true;
     clearSourcePlaybackPreview();
     setCompareMode(false);
@@ -5210,7 +5231,7 @@ window.drawArtwork = drawArtwork;
     }
   }
   const sevenTvIdPattern = /^(?:[a-f\d]{24}|[0-9A-HJKMNP-TV-Z]{26})$/i,
-    sevenTvDownloadTimeout = 30000;
+    linkDownloadTimeout = 30000;
   function sevenTvEmoteId(value) {
     let url;
     try {
@@ -5231,20 +5252,56 @@ window.drawArtwork = drawArtwork;
   function openImportDialog() {
     if (importing || exporting || linkImportBusy || $('import-dialog').open) return;
     $('seventv-link').value = '';
-    $('link-import-status').textContent =
-      '4x AVIF is recommended. Format availability depends on the emote.';
+    $('twitter-link').value = '';
+    $('link-import-status').textContent = 'Choose a link to import.';
+    $('twitter-import-hint').textContent =
+      'Public post or video.twimg.com MP4 link. Imported as video; export as GIF.';
     $('link-import-status').classList.remove('error');
     $('import-dialog').showModal();
   }
   function setLinkImportBusy(value) {
     linkImportBusy = value;
-    $('seventv-link').disabled = value;
-    $('seventv-size').disabled = value;
-    $('seventv-format').disabled = value;
-    $('import-seventv').disabled = value;
-    $('browse-files').disabled = value;
+    for (const control of $('import-dialog').querySelectorAll('input, select, button'))
+      control.disabled = value;
+  }
+  async function importLink(label, download) {
+    const status = $('link-import-status');
+    setLinkImportBusy(true);
+    status.classList.remove('error');
+    const controller = new AbortController(),
+      timeout = setTimeout(() => controller.abort(), linkDownloadTimeout);
+    try {
+      const file = await download(controller.signal, status);
+      clearTimeout(timeout);
+      setLinkImportBusy(false);
+      $('import-dialog').close();
+      await importImage(file);
+    } catch (error) {
+      const detail =
+        error.name === 'AbortError'
+          ? `${label} took longer than 30 seconds to respond.`
+          : error instanceof TypeError
+            ? 'The media could not be downloaded. Check your connection or browse for a saved file.'
+            : error.message;
+      status.textContent = `Could not import that ${label}. ${detail}`;
+      status.classList.add('error');
+    } finally {
+      clearTimeout(timeout);
+      setLinkImportBusy(false);
+    }
+  }
+  async function downloadLinkFile(url, name, type, label, signal) {
+    const response = await fetch(url, {
+      signal,
+      credentials: 'omit',
+      redirect: 'error',
+      referrerPolicy: 'no-referrer',
+    });
+    if (!response.ok) throw new Error(`${label} returned ${response.status}.`);
+    return new File([await linkMediaBlob(response, label)], name, { type });
   }
   async function importSevenTvLink(value, requestedSize, requestedFormat) {
+    if (linkImportBusy || importing || exporting || !engine) return;
     const id = sevenTvEmoteId(value);
     if (!id) {
       $('link-import-status').textContent =
@@ -5261,35 +5318,124 @@ window.drawArtwork = drawArtwork;
       },
       size = ['1', '2', '3', '4'].includes(requestedSize) ? requestedSize : '4',
       format = Object.hasOwn(formats, requestedFormat) ? requestedFormat : 'avif';
-    const status = $('link-import-status');
-    setLinkImportBusy(true);
-    status.textContent = `Downloading the ${size}x ${format.toUpperCase()}…`;
-    status.classList.remove('error');
-    const controller = new AbortController(),
-      timeout = setTimeout(() => controller.abort(), sevenTvDownloadTimeout);
+    await importLink('7TV emote', (signal, status) => {
+      status.textContent = `Downloading the ${size}x ${format.toUpperCase()}…`;
+      return downloadLinkFile(
+        `https://cdn.7tv.app/emote/${id}/${size}x.${format}`,
+        `7tv_${id}.${format}`,
+        formats[format],
+        '7TV emote',
+        signal,
+      );
+    });
+  }
+  function twitterResolver() {
+    return location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname)
+      ? '/api/twitter'
+      : 'https://emotes.gimba.uk/api/twitter';
+  }
+  function twitterMediaUrl(value) {
     try {
-      const response = await fetch(`https://cdn.7tv.app/emote/${id}/${size}x.${format}`, {
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error(`7TV returned ${response.status}.`);
-      const statedBytes = Number(response.headers.get('content-length') || 0);
-      if (statedBytes > 100 * 1024 * 1024) throw new Error('The 7TV emote is larger than 100 MB.');
-      const blob = await response.blob();
-      clearTimeout(timeout);
-      if (!blob.size || blob.size > 100 * 1024 * 1024)
-        throw new Error('The 7TV emote is empty or larger than 100 MB.');
-      const file = new File([blob], `7tv_${id}.${format}`, { type: formats[format] });
-      $('import-dialog').close();
-      await importImage(file);
-    } catch (error) {
-      const detail =
-        error.name === 'AbortError' ? '7TV took longer than 30 seconds to respond.' : error.message;
-      status.textContent = `Could not import that 7TV emote. ${detail}`;
-      status.classList.add('error');
-    } finally {
-      clearTimeout(timeout);
-      setLinkImportBusy(false);
+      const url = new URL(value);
+      if (
+        url.protocol === 'https:' &&
+        url.hostname === 'video.twimg.com' &&
+        !url.username &&
+        !url.password &&
+        !url.port &&
+        /^\/(?:tweet_video|ext_tw_video|amplify_video)\/.+\.mp4$/i.test(url.pathname)
+      ) {
+        url.hash = '';
+        return url.href;
+      }
+    } catch {}
+    return '';
+  }
+  function twitterPost(value) {
+    try {
+      const url = new URL(value.trim()),
+        host = url.hostname.replace(/^(?:www|mobile|m)\./, ''),
+        match = url.pathname.match(
+          /^\/(?:(?:[a-z0-9_]+|i\/web)\/status|i\/status|statuses)\/([1-9]\d{0,19})(?:\/(?:video|photo)\/([1-9]\d?))?\/?$/i,
+        );
+      if (
+        url.protocol === 'https:' &&
+        ['x.com', 'twitter.com'].includes(host) &&
+        !url.username &&
+        !url.password &&
+        !url.port &&
+        match
+      )
+        return { id: match[1], index: match[2] || '' };
+    } catch {}
+    return null;
+  }
+  async function linkMediaBlob(response, label) {
+    const limit = 100 * 1024 * 1024;
+    if (Number(response.headers.get('content-length')) > limit) {
+      await response.body?.cancel();
+      throw new Error(`The ${label} is larger than 100 MB.`);
     }
+    const reader = response.body.getReader(),
+      chunks = [];
+    let bytes = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > limit) {
+          await reader.cancel();
+          throw new Error(`The ${label} is larger than 100 MB.`);
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    if (!bytes) throw new Error(`The ${label} is empty.`);
+    return new Blob(chunks);
+  }
+  async function importTwitterLink(value) {
+    if (linkImportBusy || importing || exporting || !engine) return;
+    let mediaUrl = twitterMediaUrl(value.trim());
+    const post = twitterPost(value),
+      status = $('link-import-status');
+    status.classList.remove('error');
+    if (!mediaUrl && !post) {
+      status.textContent =
+        'Paste a valid x.com or twitter.com post link, or a video.twimg.com MP4 link.';
+      status.classList.add('error');
+      $('twitter-link').focus();
+      return;
+    }
+    await importLink('Twitter/X media', async (signal, status) => {
+      if (post) {
+        status.textContent = 'Finding the Twitter/X GIF or video…';
+        const query = new URLSearchParams({ id: post.id, media: post.index }),
+          response = await fetch(`${twitterResolver()}?${query}`, {
+            signal,
+            credentials: 'omit',
+            redirect: 'error',
+            referrerPolicy: 'no-referrer',
+            headers: { 'X-Emote-Workshop-Import': 'twitter' },
+          });
+        if (!response.headers.get('content-type')?.includes('application/json')) {
+          throw new Error(
+            'The Twitter/X import service is unavailable. Try again or use a direct MP4 link or saved file.',
+          );
+        }
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `Twitter/X returned ${response.status}.`);
+        mediaUrl = twitterMediaUrl(data.mediaUrl);
+        if (!mediaUrl) throw new Error('Twitter/X did not provide a supported MP4 link.');
+      }
+      status.textContent = 'Downloading the Twitter/X animation…';
+      const name = post
+        ? `twitter_${post.id}${post.index ? `_${post.index}` : ''}.mp4`
+        : `twitter_${new URL(mediaUrl).pathname.split('/').pop()}`;
+      return downloadLinkFile(mediaUrl, name, 'video/mp4', 'Twitter/X media', signal);
+    });
   }
   for (const id of ['import-top', 'empty-import', 'replace'])
     $(id).addEventListener('click', openImportDialog);
@@ -5303,17 +5449,32 @@ window.drawArtwork = drawArtwork;
   $('import-dialog').addEventListener('cancel', (event) => {
     if (linkImportBusy) event.preventDefault();
   });
-  $('import-dialog').addEventListener('close', () => setLinkImportBusy(false));
+  for (const [input, button] of [
+    ['seventv-link', 'import-seventv'],
+    ['twitter-link', 'import-twitter'],
+  ]) {
+    $(input).addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      if (!linkImportBusy) $('import-dialog').querySelector('form').requestSubmit($(button));
+    });
+  }
   $('import-dialog')
     .querySelector('form')
     .addEventListener('submit', (event) => {
-      if (event.submitter?.value === 'cancel') return;
+      if (event.submitter?.value === 'cancel') {
+        if (linkImportBusy) event.preventDefault();
+        return;
+      }
       event.preventDefault();
-      importSevenTvLink(
-        $('seventv-link').value,
-        $('seventv-size').value,
-        $('seventv-format').value,
-      );
+      if (event.submitter?.id === 'import-twitter') {
+        importTwitterLink($('twitter-link').value);
+      } else
+        importSevenTvLink(
+          $('seventv-link').value,
+          $('seventv-size').value,
+          $('seventv-format').value,
+        );
     });
   $('file-input').addEventListener('change', (e) => {
     importImage(e.target.files[0]);

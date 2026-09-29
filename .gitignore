@@ -17,4 +17,6 @@ Thumbs.db
 *.swp
 *.tmp
 
-# dist/ is authored source. Emote Workshop.html is intentionally committed.
+# Editor files in dist/ are authored; only dist/server/ is generated and ignored.
+# Emote Workshop.html is generated and intentionally committed.
+dist/server/

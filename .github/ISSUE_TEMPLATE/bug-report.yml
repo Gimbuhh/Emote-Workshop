@@ -25,7 +25,7 @@ body:
     id: version
     attributes:
       label: Emote Workshop version
-      placeholder: v1.3
+      placeholder: v1.4
     validations:
       required: true
   - type: input
