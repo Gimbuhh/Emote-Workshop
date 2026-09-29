@@ -86,6 +86,8 @@ const requested = [],
     if (id === '6')
       return new Response('{}', { headers: { 'Content-Length': String(3 * 1024 * 1024) } });
     if (id === '7') return new Response(' '.repeat(2 * 1024 * 1024 + 1));
+    if (id === '8')
+      return new Response(null, { status: 302, headers: { Location: 'https://127.0.0.1/' } });
     return Response.json(id === '3' ? {} : fixture);
   };
 assert.equal((await resolveTwitterMedia('123', '', { fetchImpl })).mediaUrl, gif);
@@ -100,7 +102,7 @@ vm.runInNewContext(
 assert.equal((await portable.resolve('123', '2', { fetchImpl })).mediaUrl, high);
 assert.equal(new URL(requested[0].url).hostname, 'cdn.syndication.twimg.com');
 assert(new URL(requested[0].url).searchParams.get('token'));
-assert.equal(requested[0].options.redirect, 'error');
+assert.equal(requested[0].options.redirect, 'manual');
 assert.equal(requested[0].options.credentials, 'omit');
 const beforeInvalid = requested.length;
 for (const id of ['0', '', '../123', 'https://localhost/', '1'.repeat(21)]) {
@@ -111,6 +113,7 @@ assert.equal(requested.length, beforeInvalid);
 await assert.rejects(resolveTwitterMedia('3', '', { fetchImpl }), /No downloadable/);
 await assert.rejects(resolveTwitterMedia('4', '', { fetchImpl }), /returned 404/);
 await assert.rejects(resolveTwitterMedia('5', '', { fetchImpl }), /readable post data/);
+await assert.rejects(resolveTwitterMedia('8', '', { fetchImpl }), /returned 302/);
 for (const id of ['6', '7'])
   await assert.rejects(resolveTwitterMedia(id, '', { fetchImpl }), /too much/);
 await assert.rejects(

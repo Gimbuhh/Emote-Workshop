@@ -55,7 +55,8 @@ export async function resolveTwitterMedia(id, index = '', { fetchImpl = fetch, s
   url.search = new URLSearchParams({ id, lang: 'en', token }).toString();
   const response = await fetchImpl(url.href, {
     signal,
-    redirect: 'error',
+    // Workers support manual redirects; non-2xx responses below are rejected.
+    redirect: 'manual',
     credentials: 'omit',
     headers: { Accept: 'application/json' },
   });
