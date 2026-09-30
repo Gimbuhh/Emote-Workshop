@@ -7,10 +7,9 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "node serve.mjs",
     "build": "node build-offline.mjs && node scripts/build-site.mjs",
     "check:build": "node build-offline.mjs --check",
-    "check:syntax": "node --check dist/app.js && node --check dist/engine.js && node --check build-offline.mjs && node --check serve.mjs && node --check twitter-import.mjs && node --check site-worker.mjs && node --check scripts/build-site.mjs && node --check scripts/verify-release.mjs",
+    "check:syntax": "node --check dist/app.js && node --check dist/engine.js && node --check build-offline.mjs && node --check twitter-import.mjs && node --check site-worker.mjs && node --check scripts/build-site.mjs && node --check scripts/verify-release.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docs:screenshot": "node scripts/capture-readme-screenshot.cjs",

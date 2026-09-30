@@ -2,14 +2,12 @@ const launchBrowser = require('./browser-launch.cjs');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const assert = require('node:assert/strict');
-const { once } = require('node:events');
 const { execFileSync } = require('node:child_process');
 
 (async () => {
   // Standalone browser checks must work in a fresh checkout, without prior test builds.
   execFileSync(process.execPath, ['scripts/build-site.mjs']);
-  const { createWorkshopServer } = await import('../serve.mjs'),
-    { createWorkshopWorker } = await import('../site-worker.mjs'),
+  const { createWorkshopWorker } = await import('../site-worker.mjs'),
     { default: assets } = await import('../dist/server/assets.mjs'),
     mediaUrl = 'https://video.twimg.com/tweet_video/test-animation.mp4',
     resolvedIds = [],
@@ -29,10 +27,7 @@ const { execFileSync } = require('node:child_process');
             },
       );
     },
-    server = createWorkshopServer({ fetchImpl }),
     hosted = createWorkshopWorker({ assets, fetchImpl });
-  server.listen(0, '127.0.0.1');
-  await once(server, 'listening');
   const browser = await launchBrowser();
   try {
     const recorderPage = await browser.newPage();
@@ -69,7 +64,6 @@ const { execFileSync } = require('node:child_process');
     for (const url of [
       pathToFileURL(path.resolve('dist/index.html')).href,
       pathToFileURL(path.resolve('Emote Workshop.html')).href,
-      `http://127.0.0.1:${server.address().port}`,
       'https://emotes.gimba.uk/',
     ]) {
       const page = await browser.newPage(),
@@ -180,7 +174,6 @@ const { execFileSync } = require('node:child_process');
     assert(resolvedIds.includes('2'));
   } finally {
     await browser.close();
-    await new Promise((resolve) => server.close(resolve));
   }
 })().catch((error) => {
   console.error(error);
