@@ -16,7 +16,7 @@ Media is processed on your device; no account or upload is required. For a fully
 
 Post links use `https://emotes.gimba.uk/api/twitter` to find the MP4 URL because Twitter's public embed endpoint blocks browser access from other sites. Only the public post ID and optional attachment number are sent to this service. The browser downloads the media directly from Twitter and processes it on your device. Direct MP4 links bypass the resolver; saved-file imports work fully offline.
 
-![Emote Workshop 1.4 editing an emote for 7TV](docs/images/emote-workshop-v1.4.png)
+![Emote Workshop 1.5 editing an emote for 7TV](docs/images/emote-workshop-v1.5.png)
 
 ## What it makes
 
@@ -26,7 +26,7 @@ Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), or paste
 - **Discord** emoji at 128×128 and stickers at 320×320
 - **7TV** up to 1000×1000 and 7 MB, preserving aspect ratio without upscaling, with an AVIF-first export preference plus WebP and GIF choices
 
-The editor keeps separate framing for each destination, with undo/redo, drag or keyboard positioning, center snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, and brightness. **Keep canvas filled** can update Scale automatically while Width or Height changes.
+The editor keeps separate framing for each destination, with undo/redo, drag or keyboard positioning, center snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, and brightness. Hover over a slider and scroll up to increase its value or down to decrease it. Percentage sliders move by one percentage point per mouse-wheel notch; rotation and outline use their displayed step. Trackpad scrolling accumulates into small steps. **Keep canvas filled** can update Scale automatically while Width or Height changes.
 
 For animation, use the filmstrip to resize or drag the selected frame range, adjust playback speed, and preview the canvas independently from the chat example. The full selected duration is retained when the destination's file-size and frame-count limits allow it; longer animations are sampled progressively when needed instead of being cut off at five seconds. Twitch and Discord emoji animations export as GIF, Discord sticker animations export as APNG, and their static sources export as PNG.
 

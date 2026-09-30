@@ -1625,8 +1625,56 @@
     }
     syncSliderValue(key, range.value);
   }
+  function bindSliderWheel(target, key) {
+    const range = $(key),
+      pixelThreshold = 80,
+      gestureGap = 250,
+      maxSteps = 4;
+    let pixels = 0,
+      previousDirection = 0,
+      previousTime = 0;
+    const reset = () => {
+      pixels = 0;
+      previousDirection = 0;
+    };
+    target.addEventListener('pointerleave', reset);
+    target.addEventListener(
+      'wheel',
+      (e) => {
+        if (
+          !source ||
+          importing ||
+          exporting ||
+          range.disabled ||
+          e.ctrlKey ||
+          e.metaKey ||
+          !Number.isFinite(e.deltaY) ||
+          !e.deltaY ||
+          Math.abs(e.deltaX) > Math.abs(e.deltaY)
+        ) {
+          reset();
+          return;
+        }
+        e.preventDefault();
+        const direction = e.deltaY < 0 ? 1 : -1;
+        if (direction !== previousDirection || e.timeStamp - previousTime > gestureGap) reset();
+        previousDirection = direction;
+        previousTime = e.timeStamp;
+        const magnitude = Math.abs(e.deltaY),
+          discrete = (e.deltaMode || 0) !== 0 || magnitude === 100 || magnitude === 120;
+        if (discrete) pixels = pixelThreshold;
+        else pixels += magnitude;
+        if (pixels < pixelThreshold) return;
+        const steps = discrete ? 1 : Math.min(maxSteps, Math.floor(pixels / pixelThreshold));
+        pixels = discrete ? 0 : pixels % pixelThreshold;
+        commitSliderValue(key, Number(range.value) + direction * steps * (Number(range.step) || 1));
+      },
+      { passive: false },
+    );
+  }
   for (const input of document.querySelectorAll('[data-slider-value]')) {
     const key = input.dataset.sliderValue;
+    bindSliderWheel($(key), key);
     let originalValue;
     input.addEventListener('focus', () => {
       originalValue = input.value;
@@ -1679,54 +1727,11 @@
   });
   const canvas = $('editor-canvas'),
     guides = $('alignment-guides');
-  const wheelPixelThreshold = 80,
-    wheelDiscreteThreshold = 100,
-    wheelMaxSteps = 4,
-    wheelGestureGap = 250;
-  let wheelPixels = 0,
-    wheelDirection = 0,
-    wheelTime = 0;
   function showGuides(x, y) {
     guides.classList.toggle('show-x', x);
     guides.classList.toggle('show-y', y);
   }
-  canvas.addEventListener(
-    'wheel',
-    (e) => {
-      if (
-        !source ||
-        importing ||
-        exporting ||
-        e.ctrlKey ||
-        e.metaKey ||
-        !Number.isFinite(e.deltaY) ||
-        !e.deltaY
-      ) {
-        wheelPixels = 0;
-        wheelDirection = 0;
-        return;
-      }
-      e.preventDefault();
-      const direction = e.deltaY < 0 ? 1 : -1;
-      if (direction !== wheelDirection || e.timeStamp - wheelTime > wheelGestureGap) {
-        wheelPixels = 0;
-      }
-      wheelDirection = direction;
-      wheelTime = e.timeStamp;
-      const magnitude = Math.abs(e.deltaY),
-        discrete =
-          (e.deltaMode || 0) !== 0 || magnitude === wheelDiscreteThreshold || magnitude === 120;
-      if (discrete) wheelPixels = wheelPixelThreshold;
-      else wheelPixels += magnitude;
-      if (wheelPixels < wheelPixelThreshold) return;
-      const steps = discrete
-        ? 1
-        : Math.min(wheelMaxSteps, Math.floor(wheelPixels / wheelPixelThreshold));
-      wheelPixels = discrete ? 0 : wheelPixels % wheelPixelThreshold;
-      commitSliderValue('zoom', Number($('zoom').value) + direction * steps);
-    },
-    { passive: false },
-  );
+  bindSliderWheel(canvas, 'zoom');
   canvas.addEventListener('pointerdown', (e) => {
     if (!source || importing || exporting || e.button !== 0) return;
     e.preventDefault();

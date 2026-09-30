@@ -2,6 +2,15 @@
 
 All notable changes to Emote Workshop are documented here. Per-version notes are preserved under `release-notes/`. Dates below follow the repository's version commits.
 
+## 1.5 - 2026-09-30
+
+### Added
+
+- Hover over any adjustment slider and scroll up to increase its value or down to decrease it. Percentage sliders change by one percentage point per mouse-wheel notch; rotation changes by 1° and outline by 0.5 px. Trackpad movement accumulates into small steps, with bounded faster scrolling and the same sensitivity as canvas zoom.
+- Slider scrolling updates the live preview and supports undo/redo, destination-specific settings, and **Keep canvas filled**.
+
+Package version: `1.5.0`; Git tag: `v1.5`. [Release notes](release-notes/1.5.md).
+
 ## 1.4 - 2026-09-29
 
 ### Added
