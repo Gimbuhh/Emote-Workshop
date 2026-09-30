@@ -126,13 +126,6 @@ const context = {
   document: {
     querySelectorAll: (selector) => (selector === '[data-slider-value]' ? inputs : buttons),
   },
-  wheelPixelThreshold: 80,
-  wheelDiscreteThreshold: 100,
-  wheelMaxSteps: 4,
-  wheelGestureGap: 250,
-  wheelPixels: 0,
-  wheelDirection: 0,
-  wheelTime: 0,
 };
 vm.createContext(context);
 vm.runInContext(
@@ -269,14 +262,17 @@ assert.equal(undoContext.states.emoji.speed, 50);
 assert.equal(undoContext.animationRanges.emoji.end, 24);
 context.canvas = new Element();
 vm.runInContext(
-  section("  canvas.addEventListener(\n    'wheel',", "  canvas.addEventListener('pointerdown'"),
+  section("  bindSliderWheel(canvas, 'zoom');", "  canvas.addEventListener('pointerdown'"),
   context,
 );
-function wheel(deltaY, deltaMode = 0) {
+let wheelTime = 0;
+function wheel(deltaY, deltaMode = 0, target = context.canvas, properties = {}) {
   const event = new Event('wheel', { cancelable: true });
   event.deltaY = deltaY;
   event.deltaMode = deltaMode;
-  context.canvas.dispatchEvent(event);
+  Object.assign(event, properties);
+  Object.defineProperty(event, 'timeStamp', { value: (wheelTime += 10) });
+  target.dispatchEvent(event);
   return event.defaultPrevented;
 }
 const loadedSource = context.source;
@@ -304,6 +300,96 @@ assert.equal(wheel(-1, 1), true);
 assert.equal(settings.zoom, 91);
 assert.equal(settings.x, 0.2);
 assert.equal(settings.y, -0.3);
+
+// Every visible slider uses its own native unit and updates the existing edit handlers.
+for (const key of Object.keys(defaults)) {
+  const before = settings[key],
+    step = Number(elements[key].step),
+    edits = history.length;
+  assert.equal(wheel(-120, 0, elements[key]), true);
+  assert.equal(settings[key], before + step, `${key} increases by one step`);
+  assert.equal(elements[`${key}-value`].value, String(before + step));
+  assert.equal(history.length, edits + 1);
+  assert.equal(history.at(-1)[key], before);
+  assert.equal(wheel(100, 0, elements[key]), true);
+  assert.equal(settings[key], before, `${key} decreases by one step`);
+}
+for (const [key, raw] of [
+  ['zoom', 300],
+  ['outline', 6],
+  ['rotation', 180],
+]) {
+  context.commitSliderValue(key, raw);
+  const edits = history.length;
+  assert.equal(wheel(-120, 0, elements[key]), true);
+  assert.equal(settings[key], raw);
+  assert.equal(history.length, edits, 'A clamped wheel event creates no undo entry');
+  context.commitSliderValue(key, elements[key].min);
+  const lowerEdits = history.length;
+  assert.equal(wheel(120, 0, elements[key]), true);
+  assert.equal(settings[key], Number(elements[key].min));
+  assert.equal(history.length, lowerEdits);
+}
+context.commitSliderValue('zoom', 90);
+const zoom = elements.zoom,
+  width = elements.width;
+assert.equal(wheel(-40, 0, zoom), true);
+assert.equal(settings.zoom, 90);
+assert.equal(wheel(-40, 0, width), true);
+assert.equal(settings.width, 100, 'Trackpad accumulation is isolated per slider');
+assert.equal(wheel(-40, 0, zoom), true);
+assert.equal(settings.zoom, 91);
+assert.equal(wheel(-40, 0, width), true);
+assert.equal(settings.width, 101);
+wheel(-40, 0, zoom);
+wheel(40, 0, zoom);
+assert.equal(settings.zoom, 91, 'Reversing direction discards the old remainder');
+wheel(40, 0, zoom);
+assert.equal(settings.zoom, 90);
+wheel(-40, 0, zoom);
+wheelTime += 300;
+wheel(-40, 0, zoom);
+assert.equal(settings.zoom, 90, 'A new gesture starts with a fresh accumulator');
+zoom.dispatchEvent(new Event('pointerleave'));
+wheel(-40, 0, zoom);
+assert.equal(settings.zoom, 90, 'Leaving the bar resets trackpad accumulation');
+wheel(-40, 0, zoom);
+assert.equal(settings.zoom, 91);
+wheel(-240, 0, zoom);
+assert.equal(settings.zoom, 94, 'Faster trackpad scrolling applies proportional steps');
+wheel(1000, 0, zoom);
+assert.equal(settings.zoom, 90, 'A large trackpad event is capped at four steps');
+for (const deltaMode of [1, 2]) {
+  wheel(-3, deltaMode, zoom);
+  assert.equal(settings.zoom, 91, 'Line/page wheel units produce one step');
+  wheel(3, deltaMode, zoom);
+}
+for (const properties of [{ ctrlKey: true }, { metaKey: true }, { deltaX: 240 }]) {
+  assert.equal(wheel(-120, 0, zoom, properties), false);
+  assert.equal(settings.zoom, 90, 'Modified or horizontal gestures do not adjust the slider');
+}
+for (const deltaY of [0, NaN, Infinity]) assert.equal(wheel(deltaY, 0, zoom), false);
+for (const lock of ['importing', 'exporting', 'source']) {
+  context[lock] = lock === 'source' ? null : true;
+  const edits = history.length;
+  assert.equal(wheel(-120, 0, zoom), false);
+  assert.equal(settings.zoom, 90);
+  assert.equal(history.length, edits);
+  context[lock] = lock === 'source' ? loadedSource : false;
+}
+zoom.disabled = true;
+assert.equal(wheel(-120, 0, zoom), false);
+assert.equal(settings.zoom, 90);
+zoom.disabled = false;
+settings.autoFill = true;
+wheel(-120, 0, width);
+assert.equal(settings.width, 102);
+assert.equal(settings.zoom, 123, 'Wheel Width changes also update auto-fill Scale');
+settings.autoFill = false;
+const trimEnd = ranges.seventv.end;
+wheel(-120, 0, elements.speed);
+assert.equal(settings.speed, 101);
+assert.equal(ranges.seventv.end, trimEnd, 'Wheel speed changes preserve selected frames');
 console.log(
-  'Exact slider entry, steps, cancellation, reset/undo, locks, wheel zoom, and animation bounds OK',
+  'Exact slider entry, reset/undo, locks, slider/canvas wheel steps, trackpad gestures, and animation bounds OK',
 );

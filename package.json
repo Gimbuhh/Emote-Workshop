@@ -1,6 +1,6 @@
 {
   "name": "emote-workshop",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "Offline Twitch, Discord, and 7TV emote editor",
   "engines": {
@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docs:screenshot": "node scripts/capture-readme-screenshot.cjs",
-    "test:browser": "node tests/import-link-smoke.cjs && node tests/twitter-import-smoke.cjs && node tests/browser-smoke.cjs && node tests/seventv-smoke.cjs && node tests/framing-smoke.cjs",
+    "test:browser": "node tests/import-link-smoke.cjs && node tests/twitter-import-smoke.cjs && node tests/browser-smoke.cjs && node tests/seventv-smoke.cjs && node tests/framing-smoke.cjs && node tests/slider-wheel-smoke.cjs",
     "test:twitter": "node tests/twitter-import.mjs && node tests/site-worker.mjs && node tests/twitter-import-smoke.cjs",
     "test:gif": "node tests/gif-regression.mjs",
     "test:avif": "node tests/avif-regression.mjs",
