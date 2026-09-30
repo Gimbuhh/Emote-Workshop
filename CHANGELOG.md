@@ -7,7 +7,7 @@ All notable changes to Emote Workshop are documented here. Per-version notes are
 ### Added
 
 - **Import media** accepts public Twitter/X GIF and video post links on the website and in the standalone HTML, resolving the best available MP4 for local editing and GIF export without a local server. Attachment suffixes select a specific item; unavailable posts show fallback guidance.
-- Direct `video.twimg.com` MP4 links can be imported in both the local app and standalone HTML file, with a 100 MB limit and download timeout.
+- Direct `video.twimg.com` MP4 links can be imported on the website and in the standalone HTML file, with a 100 MB limit and download timeout.
 
 Package version: `1.4.0`; Git tag: `v1.4`. [Release notes](release-notes/1.4.md).
 

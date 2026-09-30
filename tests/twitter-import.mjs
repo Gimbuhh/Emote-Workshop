@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
-import { once } from 'node:events';
-import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { selectTwitterMedia, resolveTwitterMedia } from '../twitter-import.mjs';
-import { createWorkshopServer } from '../serve.mjs';
 
 const gif = 'https://video.twimg.com/tweet_video/example.mp4',
   low = 'https://video.twimg.com/ext_tw_video/123/vid/320x180/low.mp4',
@@ -126,49 +123,4 @@ await assert.rejects(
   { name: 'AbortError' },
 );
 
-const server = createWorkshopServer({ fetchImpl });
-server.listen(0, '127.0.0.1');
-await once(server, 'listening');
-try {
-  const origin = `http://127.0.0.1:${server.address().port}`,
-    endpoint = `${origin}/api/twitter?id=123&media=2`,
-    headers = { 'X-Emote-Workshop-Import': 'twitter' };
-  const response = await fetch(endpoint, { headers });
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get('cache-control'), 'no-store');
-  assert.equal(response.headers.get('access-control-allow-origin'), null);
-  assert.deepEqual(await response.json(), { mediaUrl: high });
-  const beforeBlocked = requested.length;
-  for (const options of [
-    {},
-    { headers: { ...headers, Origin: 'https://evil.test' } },
-    { method: 'POST', headers },
-  ])
-    assert.equal((await fetch(endpoint, options)).status, 403, JSON.stringify(options));
-  const reboundStatus = await new Promise((resolve, reject) => {
-    const request = http.get(
-      endpoint,
-      { headers: { ...headers, Host: 'evil.test' } },
-      (response) => {
-        response.resume();
-        resolve(response.statusCode);
-      },
-    );
-    request.on('error', reject);
-  });
-  assert.equal(reboundStatus, 403);
-  assert.equal(
-    (await fetch(`${origin}/api/twitter?id=https://localhost`, { headers })).status,
-    400,
-  );
-  assert.equal(requested.length, beforeBlocked);
-  const unavailable = await fetch(`${origin}/api/twitter?id=3`, { headers });
-  assert.equal(unavailable.status, 502);
-  assert.match((await unavailable.json()).error, /No downloadable/);
-  assert.equal((await fetch(origin)).status, 200);
-} finally {
-  await new Promise((resolve) => server.close(resolve));
-}
-console.log(
-  'Twitter media selection, metadata limits, failures, and local resolver request guards passed',
-);
+console.log('Twitter media selection, portable metadata resolution, limits, and failures passed');

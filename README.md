@@ -14,7 +14,7 @@ Media is processed on your device; no account or upload is required. For a fully
 
 **Twitter/X post import:** Choose **Import media** and paste a public `x.com` or `twitter.com` post into **Twitter/X GIF or video link**. This works on the website and in **Emote Workshop.html**, without installing or running a local server. Twitter serves GIFs as MP4; the editor imports the animation and can export it as GIF for Twitch or Discord emoji, or with the 7TV **GIF** export option. The importer prefers a GIF attachment, otherwise the first video, and picks its highest-quality available MP4. A `/video/N` or `/photo/N` suffix selects that attachment. Private, deleted, restricted, and some public posts do not expose downloadable media through public embeds. A direct `https://video.twimg.com/…mp4` link or saved MP4 is the fallback.
 
-Post links use `https://emotes.gimba.uk/api/twitter` to find the MP4 URL because Twitter's public embed endpoint blocks browser access from other sites. Only the public post ID and optional attachment number are sent to this service. The browser downloads the media directly from Twitter and processes it on your device. Direct MP4 links bypass the resolver; saved-file imports work fully offline. Development with `npm run dev` uses the local resolver instead.
+Post links use `https://emotes.gimba.uk/api/twitter` to find the MP4 URL because Twitter's public embed endpoint blocks browser access from other sites. Only the public post ID and optional attachment number are sent to this service. The browser downloads the media directly from Twitter and processes it on your device. Direct MP4 links bypass the resolver; saved-file imports work fully offline.
 
 ![Emote Workshop 1.4 editing an emote for 7TV](docs/images/emote-workshop-v1.4.png)
 
@@ -32,7 +32,7 @@ For animation, use the filmstrip to resize or drag the selected frame range, adj
 
 For 7TV, AVIF is the default preference, WebP and GIF can be selected directly, and the produced format is always shown before download. Current Chrome and Edge releases do not expose animated AVIF encoding to web applications, so animated AVIF requests automatically fall back to animated WebP and then GIF while preserving timing and transparency. Still-image AVIF is used when the browser can encode it; otherwise it follows the same fallback order.
 
-The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local. The content security policy permits user-initiated media downloads from 7TV and Twitter's media CDNs and requests to the hosted or local post resolver; saved-file workflows remain fully offline. Following an explicit GitHub link leaves the offline editor.
+The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local. The content security policy permits user-initiated media downloads from 7TV and Twitter's media CDNs and requests to the hosted post resolver; saved-file workflows remain fully offline. Following an explicit GitHub link leaves the offline editor.
 
 Choose **Try sample** to try it with the included sample artwork.
 
@@ -42,7 +42,6 @@ Requirements: Node.js 22+, and for the independent GIF verification Python 3.12+
 
 ```text
 npm ci
-npm run dev        # optional local server at http://127.0.0.1:4173
 npm run build      # rebuild the standalone HTML and hosted Worker
 npm run check      # syntax, formatting, offline-build freshness
 npm test           # full test suite
@@ -51,7 +50,8 @@ npm run test:gif:verify  # independent GIF verification (needs Python + Pillow)
 
 - `dist/` contains authored editor source, except for generated `dist/server/` — commit source changes and leave `dist/server/` ignored.
 - **Emote Workshop.html** is generated but intentionally committed; rebuild it whenever the authored editor changes.
-- `site-worker.mjs` is the hosted entrypoint source, and `twitter-import.mjs` resolves public post metadata for both hosted and development imports. `npm run build` generates the deployable Worker under `dist/server/` without adding runtime dependencies.
+- Open `dist/index.html` in Chrome or Edge to preview authored editor changes locally. Public post imports use the hosted resolver.
+- `site-worker.mjs` is the hosted entrypoint source, and `twitter-import.mjs` resolves public post metadata. `npm run build` generates the deployable Worker under `dist/server/` without adding runtime dependencies.
 - `npm run format` formats; browser tests use an installed Chrome (`npx playwright install chrome`).
 - The GitHub Actions workflow runs these checks and release metadata verification on pushes and pull requests.
 

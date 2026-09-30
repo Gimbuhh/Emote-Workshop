@@ -1086,11 +1086,6 @@
       );
     });
   }
-  function twitterResolver() {
-    return location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname)
-      ? '/api/twitter'
-      : 'https://emotes.gimba.uk/api/twitter';
-  }
   function twitterMediaUrl(value) {
     try {
       const url = new URL(value);
@@ -1170,7 +1165,7 @@
       if (post) {
         status.textContent = 'Finding the Twitter/X GIF or video…';
         const query = new URLSearchParams({ id: post.id, media: post.index }),
-          response = await fetch(`${twitterResolver()}?${query}`, {
+          response = await fetch(`https://emotes.gimba.uk/api/twitter?${query}`, {
             signal,
             credentials: 'omit',
             redirect: 'error',
