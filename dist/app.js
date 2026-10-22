@@ -12,8 +12,7 @@
     },
     emoji: {
       label: 'Discord emoji',
-      hint: '128 × 128 px · PNG or GIF · Under 256 KB',
-      sizes: [128],
+      hint: 'PNG or GIF · Under 256 KB',
       limit: 'Under 256 KB',
       export: 'Export emoji',
       channel: '# general',
@@ -136,6 +135,7 @@
       'platform-seventv',
       'type-emoji',
       'type-sticker',
+      'emoji-size',
       'seventv-export-format',
       'emote-name',
     ])
@@ -240,6 +240,9 @@
       height: Math.max(1, Math.round(d.height * ratio)),
     };
   }
+  function outputSizes(destination = mode) {
+    return destination === 'emoji' ? [Number($('emoji-size').value)] : modes[destination].sizes;
+  }
   function drawEditor() {
     const c = $('editor-canvas'),
       d = editorSize();
@@ -257,6 +260,17 @@
         c.height,
       );
     drawOriginalCompare();
+    const hint = $('preview-resolution'),
+      output = mode === 'seventv' ? uploadSize() : null,
+      dimensions = output
+        ? `${output.width} × ${output.height}`
+        : outputSizes()
+            .map((size) => `${size} × ${size}`)
+            .join(', ');
+    hint.hidden = !editorImage;
+    hint.textContent = compareMode
+      ? 'Actual size shows the export without enlargement. In chat shows message size.'
+      : `Editing preview · Export: ${dimensions} px. Use Compare to check exported detail.`;
   }
   function drawOriginalCompare() {
     const canvas = $('original-compare-canvas'),
@@ -350,6 +364,7 @@
       live.hidden = false;
       $('converted-wrap').style.aspectRatio = `${editor.width} / ${editor.height}`;
     } else live.hidden = true;
+    $('converted-size-toggle').disabled = true;
     $('compare-converted-meta').textContent = source ? 'Live preview' : 'No export yet';
   }
   function syncConvertedPreview(restart = false) {
@@ -360,16 +375,18 @@
       live = $('converted-live-preview');
     pane.hidden = !compareMode;
     $('compare-original-meta').textContent = source
-      ? `${source.type} · ${formatBytes(source.bytes)}`
+      ? `${source.type} · ${source.width} × ${source.height} · ${formatBytes(source.bytes)}`
       : 'Source preview';
     if (!compareMode || !media) {
       clearConvertedPreview();
       return;
     }
     $('converted-wrap').style.aspectRatio = `${media.width} / ${media.height}`;
+    pane.style.setProperty('--export-width', `${media.width}px`);
+    $('converted-size-toggle').disabled = false;
     live.hidden = true;
     $('compare-converted-meta').textContent =
-      `${media.format} · ${formatBytes(media.bytes)}${media.frames > 1 ? ` · ${media.frames}f` : ''}`;
+      `${media.format} · ${media.width} × ${media.height} · ${formatBytes(media.bytes)}${media.frames > 1 ? ` · ${media.frames}f` : ''}`;
     if (!source.animated) {
       comparePlaybackRevision++;
       paused.hidden = true;
@@ -594,7 +611,7 @@
         output =
           destination === 'seventv'
             ? uploadSize()
-            : { width: modes[destination].sizes[0], height: modes[destination].sizes[0] },
+            : { width: outputSizes(destination)[0], height: outputSizes(destination)[0] },
         size = surface === 'editor' ? d : output,
         result = await engine.call('previewFrame', {
           index,
@@ -726,7 +743,7 @@
     list.replaceChildren();
     for (const size of mode === 'seventv'
       ? [items[0]?.size || uploadSize().width]
-      : modes[mode].sizes) {
+      : outputSizes()) {
       const item = items.find((o) => o.size === size),
         row = document.createElement('div');
       row.className = 'output-row';
@@ -837,6 +854,7 @@
         mode: destination,
         state: clone(state()),
         range: animationPayload(),
+        emojiSize: Number($('emoji-size').value),
         format: destination === 'seventv' ? $('seventv-export-format').value : undefined,
       });
       if (rev !== previewRevision || destination !== mode) return;
@@ -881,10 +899,14 @@
     );
     $('platform-seventv').setAttribute('aria-pressed', String(mode === 'seventv'));
     $('discord-types').hidden = mode !== 'emoji' && mode !== 'sticker';
+    $('emoji-size-control').hidden = mode !== 'emoji';
     $('seventv-export-control').hidden = mode !== 'seventv';
     $('type-emoji').setAttribute('aria-pressed', String(mode === 'emoji'));
     $('type-sticker').setAttribute('aria-pressed', String(mode === 'sticker'));
-    $('destination-hint').textContent = modes[mode].hint;
+    $('destination-hint').textContent =
+      mode === 'emoji'
+        ? `${outputSizes()[0]} × ${outputSizes()[0]} px · ${modes[mode].hint}`
+        : modes[mode].hint;
     $('export-label').textContent = modes[mode].export;
     $('canvas-title').textContent = source ? modes[mode].label : 'Canvas';
     syncControls();
@@ -1277,6 +1299,7 @@
   $('platform-seventv').onclick = () => selectMode('seventv');
   $('type-emoji').onclick = () => selectMode('emoji');
   $('type-sticker').onclick = () => selectMode('sticker');
+  $('emoji-size').addEventListener('change', () => selectMode('emoji'));
   $('seventv-export-format').addEventListener('change', () => {
     if (mode !== 'seventv' || !source || importing || exporting) return;
     schedulePreview();
@@ -1298,6 +1321,10 @@
       applyPlayback(surface, compareMode && surface === 'editor' && playback[surface].playing);
     };
   $('compare-toggle').onclick = () => setCompareMode(!compareMode);
+  $('converted-size-toggle').onclick = () => {
+    const actual = $('converted-wrap').classList.toggle('actual-size');
+    $('converted-size-toggle').setAttribute('aria-pressed', String(actual));
+  };
   $('compare-original').onclick = () => setCompareSide('original');
   $('compare-converted').onclick = () => setCompareSide('converted');
   const trimEdits = new Set();
@@ -1829,6 +1856,7 @@
             states: clone(states),
             ranges: clone(animationRanges),
             formats: { seventv: $('seventv-export-format').value },
+            emojiSize: Number($('emoji-size').value),
           })
         : { [mode]: outputs };
       if (!all && mode !== 'twitch') {

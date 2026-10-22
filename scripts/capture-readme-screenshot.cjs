@@ -11,10 +11,7 @@ const version = require('../package.json').version,
     await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
     await page.click('#sample');
     await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
-    await page.click('#platform-seventv');
-    await page.click('#auto-fill');
-    await page.locator('#width-value').fill('140');
-    await page.locator('#width-value').press('Enter');
+    await page.locator('#emoji-size').selectOption('256');
     await page.waitForFunction(() => !document.querySelector('#export-current').disabled);
     await page.click('#compare-toggle');
     await page.evaluate(() => {

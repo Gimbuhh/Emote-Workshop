@@ -52,6 +52,7 @@ const context = {
       'editor-wrap': wrap,
       'original-compare-canvas': originalCanvas,
       'original-animated-preview': originalAnimated,
+      'emoji-size': { value: String(context.emojiSize || 128) },
     })[id] || editor,
   document: {
     querySelector: () => wrap,
@@ -106,11 +107,13 @@ vm.runInContext(
 for (const [mode, width, height, outputWidth, outputHeight] of [
   ['twitch', 800, 800, 112, 112],
   ['emoji', 800, 800, 128, 128],
+  ['emoji', 800, 800, 256, 256],
   ['sticker', 800, 800, 320, 320],
   ['seventv', 800, 800, 128, 128],
   ['seventv', 800, 394, 260, 128],
 ]) {
   context.mode = mode;
+  context.emojiSize = outputWidth;
   context.uploadSize = () => ({ width: outputWidth, height: outputHeight });
   context.drawEditor();
   assert.deepEqual([canvas.width, canvas.height], [width, height]);

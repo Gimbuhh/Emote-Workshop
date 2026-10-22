@@ -16,14 +16,14 @@ Media is processed on your device; no account or upload is required. For a fully
 
 Post links use `https://emotes.gimba.uk/api/twitter` to find the MP4 URL because Twitter's public embed endpoint blocks browser access from other sites. Only the public post ID and optional attachment number are sent to this service. The browser downloads the media directly from Twitter and processes it on your device. Direct MP4 links bypass the resolver; saved-file imports work fully offline.
 
-![Emote Workshop 1.5 editing an emote for 7TV](docs/images/emote-workshop-v1.5.png)
+![Emote Workshop 1.6 comparing a 256-pixel Discord emoji export](docs/images/emote-workshop-v1.6.png)
 
 ## What it makes
 
 Import PNG, JPEG, GIF, WebP, AVIF, or MP4 (animated sources supported), or paste a 7TV emote page/CDN link to import one of its 1x–4x renditions. The largest 4x AVIF is the default, with WebP, GIF, and PNG available when the emote provides them. Then pick a destination, adjust framing, and export:
 
 - **Twitch** manual-upload packs at 112×112, 56×56, and 28×28, with animated exports limited to 512 KB and 60 frames
-- **Discord** emoji at 128×128 and stickers at 320×320
+- **Discord** emoji at 128×128 or 256×256 and stickers at 320×320
 - **7TV** up to 1000×1000 and 7 MB, preserving aspect ratio without upscaling, with an AVIF-first export preference plus WebP and GIF choices
 
 The editor keeps separate framing for each destination, with undo/redo, drag or keyboard positioning, center snapping, rotation, flip, fit/fill, transparent-margin trimming, width/height stretching, outlines, and brightness. Hover over a slider and scroll up to increase its value or down to decrease it. Percentage sliders move by one percentage point per mouse-wheel notch; rotation and outline use their displayed step. Trackpad scrolling accumulates into small steps. **Keep canvas filled** can update Scale automatically while Width or Height changes.
@@ -33,6 +33,8 @@ For animation, use the filmstrip to resize or drag the selected frame range, adj
 For 7TV, AVIF is the default preference, WebP and GIF can be selected directly, and the produced format is always shown before download. Current Chrome and Edge releases do not expose animated AVIF encoding to web applications, so animated AVIF requests automatically fall back to animated WebP and then GIF while preserving timing and transparency. Still-image AVIF is used when the browser can encode it; otherwise it follows the same fallback order.
 
 The original and converted formats, file sizes, dimensions, and destination limits are checked before download. **Compare** shows the untouched source and actual converted output side by side on larger screens, with an Original/Converted switch on mobile. All media processing is local. The content security policy permits user-initiated media downloads from 7TV and Twitter's media CDNs and requests to the hosted post resolver; saved-file workflows remain fully offline. Following an explicit GitHub link leaves the offline editor.
+
+The large editing canvas shows more detail than a small emote export can retain. Use **Compare** to inspect the actual exported file: **Actual size** shows it without enlargement, and turning that off enlarges it for inspection. **In chat** previews its message size. Discord emoji default to 128×128; choose **Emoji size → 256 × 256** to try a larger export. Both sizes must remain under 256 KB, and Discord may resize the uploaded image. Fine text and facial details from large source images may be lost; crop around the important artwork or use a 320×320 sticker when a larger image is needed. PNG exports preserve full color and transparency without lossy compression.
 
 Choose **Try sample** to try it with the included sample artwork.
 

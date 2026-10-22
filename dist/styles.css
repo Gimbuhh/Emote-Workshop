@@ -797,7 +797,8 @@ input[type='color'] {
   min-width: 80px;
   margin-right: 3px;
 }
-.compare-toggle[aria-pressed='true'] {
+.compare-toggle[aria-pressed='true'],
+.export-size-toggle[aria-pressed='true'] {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-hover);
@@ -849,9 +850,10 @@ input[type='color'] {
 }
 .compare-pane figcaption {
   display: none;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 52px;
+  gap: 4px;
   margin-bottom: 10px;
 }
 .compare-pane figcaption strong {
@@ -859,11 +861,10 @@ input[type='color'] {
   font-weight: 650;
 }
 .compare-pane figcaption span {
-  overflow: hidden;
+  max-width: 100%;
   color: var(--muted);
   font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .compare-mobile-switch {
   display: none;
@@ -923,6 +924,14 @@ input[type='color'] {
 .chat img {
   -webkit-user-drag: none;
   user-select: none;
+}
+.converted-pane:has(.converted-wrap.actual-size) {
+  width: min(100%, var(--export-width, 100%));
+  justify-self: center;
+}
+.converted-pane .export-size-toggle {
+  display: flex;
+  margin: 10px auto 0;
 }
 .original-compare-preview {
   display: block;
@@ -1094,6 +1103,7 @@ input[type='color'] {
   min-height: 44px;
   padding: 14px 20px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
