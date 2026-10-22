@@ -2,6 +2,22 @@
 
 All notable changes to Emote Workshop are documented here. Per-version notes are preserved under `release-notes/`. Dates below follow the repository's version commits.
 
+## 1.6 - 2026-10-23
+
+### Added
+
+- Discord emoji offer a choice of 128×128 or 256×256 for PNG and animated GIF exports. Previews, downloads, and all-destination ZIPs use the selected size while retaining the under-256-KB file limit.
+
+### Changed
+
+- **Compare** shows the converted file at **Actual size** by default, with an enlarged view available. Original and converted files both show pixel dimensions, and their headings align with their previews. The editing canvas explains how to check exported detail.
+
+### Fixed
+
+- Discord and Twitch PNG exports no longer show an incorrect **AVIF unavailable** message.
+
+Package version: `1.6.0`; Git tag: `v1.6`. [Release notes](release-notes/1.6.md).
+
 ## 1.5 - 2026-09-30
 
 ### Added

@@ -80,8 +80,8 @@
           href="https://github.com/Gimbuhh/Emote-Workshop/blob/main/CHANGELOG.md"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Version 1.5 — view changelog on GitHub (opens in a new tab)"
-          >v1.5</a
+          aria-label="Version 1.6 — view changelog on GitHub (opens in a new tab)"
+          >v1.6</a
         >
       </div>
       <div class="header-actions">
@@ -120,6 +120,13 @@
               <button id="type-emoji" aria-pressed="true">Emoji</button
               ><button id="type-sticker" aria-pressed="false">Sticker</button>
             </div>
+            <label id="emoji-size-control" class="export-format-control">
+              Emoji size
+              <select id="emoji-size">
+                <option value="128" selected>128 × 128</option>
+                <option value="256">256 × 256</option>
+              </select>
+            </label>
             <p id="destination-hint" class="muted destination-hint">
               One file for messages and reactions.
             </p>
@@ -470,7 +477,7 @@
                   <figcaption>
                     <strong>Converted</strong><span id="compare-converted-meta">Preparing…</span>
                   </figcaption>
-                  <div id="converted-wrap" class="converted-wrap">
+                  <div id="converted-wrap" class="converted-wrap actual-size">
                     <img id="converted-preview" alt="Converted export preview" draggable="false" />
                     <canvas
                       id="converted-paused"
@@ -483,6 +490,15 @@
                       hidden
                     ></canvas>
                   </div>
+                  <button
+                    id="converted-size-toggle"
+                    class="playback-button export-size-toggle"
+                    aria-pressed="true"
+                    title="Show the export without enlarging it. Turn off to inspect enlarged."
+                    disabled
+                  >
+                    Actual size
+                  </button>
                 </figure>
               </div>
             </div>
@@ -494,6 +510,7 @@
             <span id="canvas-instruction"
               >Drag, drop, paste, or import a file. Scroll over the canvas to zoom.</span
             >
+            <span id="preview-resolution" hidden></span>
           </div>
           <section class="size-comparison" aria-label="Original and export file sizes">
             <div class="comparison-item">

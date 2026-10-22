@@ -63,7 +63,7 @@ function imageWorker() {
       duration: Infinity,
       maxFrames: 60,
     },
-    emoji: { sizes: [128], limit: 256 * 1024 - 1, duration: Infinity },
+    emoji: { limit: 256 * 1024 - 1, duration: Infinity },
     sticker: { sizes: [320], limit: 512 * 1024, duration: Infinity },
     seventv: { sizes: [1000], limit: 7 * 1000 * 1000, duration: Infinity, maxFrames: 1000 },
   };
@@ -1231,10 +1231,12 @@ function imageWorker() {
     if (roundedHeight >= roundedWidth * 3) return [roundedWidth, roundedWidth * 3 - 1];
     return [roundedWidth, roundedHeight];
   }
-  async function render(mode, state, range, requestedFormat = 'avif') {
+  async function render(mode, state, range, requestedFormat = 'avif', emojiSize = 128) {
     if (!frames.length) throw new Error('Import media first.');
     const preset = presets[mode];
     if (!preset) throw new Error('Unknown destination.');
+    if (mode === 'emoji' && ![128, 256].includes(emojiSize))
+      throw new Error('Choose a 128 × 128 or 256 × 256 emoji size.');
     checkState(state);
     const original = state.trim ? bounds : { w: frames[0].width, h: frames[0].height },
       source = {
@@ -1245,7 +1247,7 @@ function imageWorker() {
       dimensions =
         mode === 'seventv'
           ? [limitAspectRatio(source.w * ratio, source.h * ratio)]
-          : preset.sizes.map((size) => [size, size]);
+          : (mode === 'emoji' ? [emojiSize] : preset.sizes).map((size) => [size, size]);
     const outputs = [];
     for (const [size, height] of dimensions) {
       if (animated) {
@@ -1288,7 +1290,10 @@ function imageWorker() {
         if (blob.size <= preset.limit) {
           format = candidate.toUpperCase();
           extension = candidate;
-          fallbackFrom = candidate !== requestedFormat ? requestedFormat.toUpperCase() : '';
+          fallbackFrom =
+            mode === 'seventv' && candidate !== requestedFormat
+              ? requestedFormat.toUpperCase()
+              : '';
           break;
         }
         blob = null;
@@ -1333,7 +1338,7 @@ function imageWorker() {
             data.includeSource,
           );
         else if (data.action === 'render')
-          result = await render(data.mode, data.state, data.range, data.format);
+          result = await render(data.mode, data.state, data.range, data.format, data.emojiSize);
         else if (data.action === 'all') {
           result = {};
           for (const mode of Object.keys(presets))
@@ -1342,6 +1347,7 @@ function imageWorker() {
               data.states[mode],
               data.ranges?.[mode] ?? data.range,
               data.formats?.[mode],
+              data.emojiSize,
             );
         } else throw new Error('Unknown operation.');
         self.postMessage({ id: data.id, result });
